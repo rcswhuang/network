@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <QThread>
-#include "hnetworkapi.h"
+#include "networkapi.h"
 class QMutex;
 class HNetThread :public QThread
 {

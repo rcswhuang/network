@@ -1,5 +1,5 @@
 ﻿#include "hnetworkapp.h"
-#include "htcpclient.h"
+#include "hconnect.h"
 #include "hprotocol.h"
 #include <QTimerEvent>
 
@@ -91,14 +91,13 @@ void HNetworkApp::handle_send(RecvData *senddata)
     if(!senddata)
         return;
     //先修改发送时间
-    std::string time = to_simple_string(second_clock::local_time());
+/*    std::string time = to_simple_string(second_clock::local_time());
     senddata->time = time;
-    int ip = senddata->ip;
     //双主模式
     if(MODE_DOUBLE_MASTER == m_send_mode)
     {
-        /*int ip = senddata->ip;
-        HTcpClientPtr conn = conn_map[ip];
+        int ip = senddata->ip;
+        HConnectPtr conn = conn_map[ip];
         if(conn)
         {
             conn->send_msg(senddata->data,senddata->len);
@@ -106,27 +105,22 @@ void HNetworkApp::handle_send(RecvData *senddata)
             if(conn->m_p_tcp_server == m_tcpServerB)
                 info = "linkB";
             add_msg_for_show(MSG_LINK_SEND,senddata,info);
-        }*/
+        }
     }
     else if(MODE_MASTER_RESERVER == m_send_mode) //主备模式
     {
         std::string info = "linkA";
-<<<<<<< HEAD:hnetworkapp.cpp
-        if(m_tcpServerA->find_tcp_client_ptr(ip)->status() == CONNECTED)
-=======
-        //要判断是否为空
-        if(m_tcp_server_a->m_p_client_connect->status() == CONNECTED)
->>>>>>> df21d31b704e7de76870272105708fa357e85b11:HNetApp.cpp
+        if(m_tcpServerA->m_p_client_connect->status() == CONNECTED)
         {
-            m_tcpServerA->find_tcp_client_ptr(ip)->send_msg(senddata->data,senddata->len);
+            m_tcpServerA->m_p_client_connect->send_msg(senddata->data,senddata->len);
         }
-        else if(m_tcpServerB->find_tcp_client_ptr(ip)->status() == CONNECTED)
+        else if(m_tcpServerB->m_p_client_connect->status() == CONNECTED)
         {
             info = "linkB";
-            m_tcpServerB->find_tcp_client_ptr(ip)->send_msg(senddata->data,senddata->len);
+            m_tcpServerB->m_p_client_connect->send_msg(senddata->data,senddata->len);
         }
         add_msg_for_show(MSG_LINK_SEND,senddata,info);
-    }
+    }*/
 }
 
 void HNetworkApp::handle_send(char* pData,int nLength)
@@ -168,7 +162,7 @@ void HNetworkApp::proc_recv_data()
             //调用规约接口处理
             //HProtocol::m_pInstance->handleReceive(p_recv_data);
             //调用显示链路层接口处理
-            HTcpClientPtr conn = conn_map[p_recv_data->ip];
+            HConnectPtr conn = conn_map[p_recv_data->ip];
             std::string info = "who Recv";
             if(conn)
             {

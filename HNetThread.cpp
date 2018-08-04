@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 ﻿#pragma once
 #include "hnetthread.h"
 #include "hnetworkapp.h"
-=======
-﻿#include "hnetthread.h"
-#include "hnetapp.h"
->>>>>>> df21d31b704e7de76870272105708fa357e85b11
 
 HNetThread::HNetThread(QObject* parent)
 {

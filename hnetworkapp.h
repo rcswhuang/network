@@ -1,9 +1,9 @@
-﻿#include "hnetworkapi.h"
+﻿#include "networkapi.h"
 #include "hnetthread.h"
 #include "hserver.h"
 class HTcpServer;
 class QTimerEvent;
-class HTcpClient;
+class HConnect;
 /*
  * 本网络仅对双网且是主备模式
 */
@@ -20,7 +20,7 @@ public:
     ~HNetworkApp();
 
 public:
-    std::map<int,HTcpClientPtr> conn_map;
+    std::map<int,HConnectPtr> conn_map;
     HTcpServer* m_tcpServerA; //服务器A网
     HTcpServer* m_tcpServerB; //服务器B网
     int m_send_mode;
