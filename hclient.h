@@ -3,11 +3,6 @@
 #include "networkapi.h"
 #include "hnetworkapp.h"
 #include "hmsg.h"
-using namespace std;
-using namespace boost;
-using namespace boost::asio;
-using namespace boost::asio::ip;
-using namespace boost::posix_time;
 class HTcpClient;
 typedef boost::shared_ptr<HTcpClient> HTcpClientPtr;
 class HTcpClient :public boost::enable_shared_from_this<HTcpClient>, boost::noncopyable
@@ -24,20 +19,22 @@ public:
 	void do_read();
     void on_read(const boost::system::error_code& err);
     void send_msg(char* msg,int length);
-    void do_write(const std::string msg);
-	void on_write(const boost::system::error_code& err, size_t bytes);
+    void do_write(const boost::system::error_code& err);
+    void  push_msg_to_list(HMsg* msg);
+    HMsg* pop_msg_from_list();
+    HMsg* take_msg_from_list();
 
     //外部调用start返回指针 暂时用不到
     static HTcpClientPtr start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port);
 private:
     HMsg m_msg;
+    std::list<HMsg*> m_lp_send_list;
+    boost::mutex m_send_mutex;
+
 	bool b_is_connected;
 	ip::tcp::socket sock_;
 	ip::tcp::endpoint local_ep;
 	ip::tcp::endpoint remote_ep;
-	enum {max_msg = 1024};
-	char read_buffer_[max_msg];
-	char write_buffer_[max_msg];
 	deadline_timer connect_timer;
     HNetworkApp* m_pNetworkApp;
 };

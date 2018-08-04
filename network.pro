@@ -52,7 +52,7 @@ HEADERS  += networkapi.h \
 RESOURCES += \
     #network.qrc
 
-LIBS +=  -L../lib/lib64-boost-vc12
+#LIBS +=  -L../lib/lib64-boost-vc12
 win32{
     UI_DIR = temp/ui
     MOC_DIR = temp/moc
@@ -67,9 +67,16 @@ win32{
 }
 
 unix {
-        UI_DIR	=	.ui
-        MOC_DIR	=	.moc
-        OBJECTS_DIR	=	.obj
+        #UI_DIR	= temp/ui
+        #MOC_DIR	= temp/moc
+        #OBJECTS_DIR = temp/obj
+      LIBS += -L../lib/lib64-linux-boost \
+            -lboost_system-mt \
+            -lboost_date_time-mt \
+            -lboost_regex-mt \
+            -lboost_atomic-mt \
+            -lboost_thread-mt \
+            -lboost_chrono-mt
 }
 
 FORMS += \

@@ -12,12 +12,12 @@ HTcpClient::HTcpClient(io_service &ios, ip::address& local_addr, ip::address& re
 	remote_ep.port(port);
 	//Æô¶¯¶¨Ê±Æ÷
 	//connect_timer.expires_at(boost::posix_time::seconds(1));
-	connect_timer.async_wait(&restart);
+    connect_timer.async_wait(boost::bind(&HTcpClient::restart, this,asio::placeholders::error));
 }
 
 void HTcpClient::start()
 {
-    sock_.async_connect(remote_ep, boost::bind(on_connect, this,asio::placeholders::error));
+    sock_.async_connect(remote_ep, boost::bind(&HTcpClient::on_connect, this,asio::placeholders::error));
 }
 
 void HTcpClient::restart(const boost::system::error_code& err)
@@ -25,7 +25,7 @@ void HTcpClient::restart(const boost::system::error_code& err)
 	if (!is_connected())
 	{
 		connect_timer.expires_at(connect_timer.expires_at() + boost::posix_time::seconds(10));
-		connect_timer.async_wait(&restart);
+        connect_timer.async_wait(boost::bind(&HTcpClient::restart, this,asio::placeholders::error));
 		start();
 	}
 }
@@ -50,36 +50,87 @@ void HTcpClient::on_connect(const boost::system::error_code& err)
 
 void HTcpClient::do_read()
 {
-    async_read(sock_, asio::buffer(m_msg.data(),m_msg.data_length()), boost::bind(on_read,this,asio::placeholders::error));
-	//sock_.async_read_some();
+    boost::asio::async_read(sock_, asio::buffer(m_msg.data(),m_msg.data_length()), boost::bind(&HTcpClient::on_read,this,asio::placeholders::error));
 }
-void HTcpClient::do_write(const std::string msg)
-{
-	//if (!started()) return;
-	std::copy(msg.begin(), msg.end(), write_buffer_);
-    sock_.async_write_some(buffer(write_buffer_), boost::bind(on_write,this,asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
-}
-
 
 void HTcpClient::on_read(const boost::system::error_code& err)
 {
-	if(err) stop();
+    if(err); //stop();
     std::string time = to_simple_string(second_clock::local_time());
     int ip = remote_ep.address().to_v4().to_ulong();
     m_pNetworkApp->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),ip,time);
     do_read();
 }
 
-void HTcpClient::on_write(const boost::system::error_code& err, size_t bytes)
+void HTcpClient::send_msg(char* data,int length)
 {
-	if (err) do_read();
+    if(!data) return;
+    HMsg *msg = new HMsg;
+    memcpy(msg->data(),data,length);
+    msg->set_data_length(length-HEAD_SIZE);
+
+    push_msg_to_list(msg);
+
+    if(!m_lp_send_list.empty())
+    {
+        HMsg* p_msg = pop_msg_from_list();
+        boost::asio::async_write(sock_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpClient::do_write,this,asio::placeholders::error));
+    }
 }
 
-void HTcpClient::send_msg(char* msg,int length)
+void HTcpClient::do_write(const boost::system::error_code& err)
 {
+    if(!err)
+    {
+        if(!m_lp_send_list.empty())
+        {
+            HMsg* front = take_msg_from_list();
+            if(!front)
+                delete front;
 
+            HMsg* p_msg = pop_msg_from_list();
+            boost::asio::async_write(sock_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpClient::do_write,this,asio::placeholders::error));
+        }
+    }
+    else
+    {
+        //stop();
+        std::ostringstream os;
+        os.str().reserve(128);
+        os << sock_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
+        //add_msg_for_show(MSG_ERROR,os.str());
+    }
 }
 
+void  HTcpClient::push_msg_to_list(HMsg* msg)
+{
+    m_send_mutex.lock();
+    m_lp_send_list.push_back(msg);
+    m_send_mutex.unlock();
+}
+
+HMsg* HTcpClient::pop_msg_from_list()
+{
+    HMsg* msg = NULL;
+    m_send_mutex.lock();
+    if(!m_lp_send_list.empty())
+        msg = m_lp_send_list.front();
+    m_send_mutex.unlock();
+    return msg;
+}
+
+HMsg* HTcpClient::take_msg_from_list()
+{
+    HMsg* msg = NULL;
+    m_send_mutex.lock();
+    if(!m_lp_send_list.empty())
+    {
+        msg = m_lp_send_list.front();
+        m_lp_send_list.pop_front();
+    }
+    m_send_mutex.unlock();
+    return msg;
+}
 /*
 HTcpClientPtr HTcpClient::start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback)
 {

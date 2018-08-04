@@ -1,4 +1,6 @@
-﻿#include "networkapi.h"
+﻿#ifndef HMSG_H_
+#define HMSG_H_
+#include "networkapi.h"
 
 class HMsg
 {
@@ -33,7 +35,7 @@ private:
     char msg_[HEAD_SIZE + DATA_SIZE];
     std::size_t data_len;
 };
-
+#endif
 
 
 
