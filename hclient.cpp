@@ -1,7 +1,7 @@
 #include "hclient.h"
-/*
-HSession::HSession(io_service &ios, ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback)
-:sock_(ios), m_callback(callback), connect_timer(ios, boost::posix_time::seconds(10))
+
+HTcpClient::HTcpClient(io_service &ios, ip::address& local_addr, ip::address& remote_addr, unsigned short port, HNetworkApp* app)
+:sock_(ios), connect_timer(ios, boost::posix_time::seconds(10)),m_pNetworkApp(app)
 {
 	b_is_connected = false;
 	local_ep.address(local_addr);
@@ -15,12 +15,12 @@ HSession::HSession(io_service &ios, ip::address& local_addr, ip::address& remote
 	connect_timer.async_wait(&restart);
 }
 
-void HSession::start()
+void HTcpClient::start()
 {
-	sock_.async_connect(remote_ep, boost::bind(on_connect, _1));
+    sock_.async_connect(remote_ep, boost::bind(on_connect, this,asio::placeholders::error));
 }
 
-void HSession::restart(const boost::system::error_code& err)
+void HTcpClient::restart(const boost::system::error_code& err)
 {
 	if (!is_connected())
 	{
@@ -29,13 +29,12 @@ void HSession::restart(const boost::system::error_code& err)
 		start();
 	}
 }
-bool HSession::is_connected()
+bool HTcpClient::is_connected()
 {
 	return b_is_connected;
 }
 
-//整个过程保证ios时刻都有异步任务在执行
-void HSession::on_connect(const boost::system::error_code& err)
+void HTcpClient::on_connect(const boost::system::error_code& err)
 {
 	if (!err)
 	{
@@ -49,42 +48,50 @@ void HSession::on_connect(const boost::system::error_code& err)
 	}
 }
 
-void HSession::do_read()
+void HTcpClient::do_read()
 {
-	async_read(sock_, buffer(read_buffer_), boost::bind(on_read, _1, _2));
+    async_read(sock_, asio::buffer(m_msg.data(),m_msg.data_length()), boost::bind(on_read,this,asio::placeholders::error));
 	//sock_.async_read_some();
 }
-void HSession::do_write(const std::string msg)
+void HTcpClient::do_write(const std::string msg)
 {
 	//if (!started()) return;
 	std::copy(msg.begin(), msg.end(), write_buffer_);
-	sock_.async_write_some(buffer(write_buffer_), boost::bind(on_write, _1, _2));
+    sock_.async_write_some(buffer(write_buffer_), boost::bind(on_write,this,asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
 }
 
 
-void HSession::on_read(const boost::system::error_code& err, size_t bytes)
+void HTcpClient::on_read(const boost::system::error_code& err)
 {
 	if(err) stop();
-	std::string msg(read_buffer_, bytes);
-	m_callback(MSG_R_TYPE, msg, msg.size());
+    std::string time = to_simple_string(second_clock::local_time());
+    int ip = remote_ep.address().to_v4().to_ulong();
+    m_pNetworkApp->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),ip,time);
+    do_read();
 }
 
-void HSession::on_write(const boost::system::error_code& err, size_t bytes)
+void HTcpClient::on_write(const boost::system::error_code& err, size_t bytes)
 {
 	if (err) do_read();
 }
 
-
-ptr_session HSession::start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback)
+void HTcpClient::send_msg(char* msg,int length)
 {
-	ptr_session new_(new HSession(ios, local_addr, remote_addr, port, callback));
+
+}
+
+/*
+HTcpClientPtr HTcpClient::start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback)
+{
+    HTcpClientPtr new_(new HTcpClient(ios, local_addr, remote_addr, port, callback));
 	new_->start();
 	return new_;
-}
+}*/
 
 
 
 /////////////////////////////////////////////////////客户端类////////////////////////////////////////////
+ /*
 void AsyncTCPClient::create_threads(unsigned short thread_pool_size)
 {
 	if (thread_pool_size > defalut_thread_pool_size)

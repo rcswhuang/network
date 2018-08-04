@@ -24,6 +24,7 @@ INCLUDEPATH += \
 SOURCES += main.cpp\
     #hprotocol.cpp \
     #hmessage.cpp \
+    hclient.cpp \
     hmsg.cpp \
     hnetthread.cpp \
     hnetmonitor.cpp \
@@ -37,6 +38,7 @@ SOURCES += main.cpp\
 HEADERS  += networkapi.h \
     #hprotocol.h \
     #hmessage.h \
+    hclient.h \
     hmsg.h \
     hnetthread.h \
     hnetmonitor.h \

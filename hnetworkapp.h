@@ -1,6 +1,6 @@
 ﻿#include "networkapi.h"
 #include "hnetthread.h"
-#include "hserver.h"
+#include "htcpserver.h"
 class HTcpServer;
 class QTimerEvent;
 class HConnect;

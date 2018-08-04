@@ -1,5 +1,5 @@
 ﻿#include "hconnect.h"
-#include "hserver.h"
+#include "htcpserver.h"
 #include "hnetworkapp.h"
 extern QMutex g_msg_mutex;
 extern std::list<ShowMsg*> g_msg_list;

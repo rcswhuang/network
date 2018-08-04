@@ -1,23 +1,18 @@
 ﻿#ifndef HCLIENT_H
 #define HCLIENT_H
 #include "networkapi.h"
-/*
-#include <thread>
-#include <atomic>
-#include <QtGlobal>
+#include "hnetworkapp.h"
+#include "hmsg.h"
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 using namespace boost::posix_time;
-
-//回调函数
-//typedef void(*Callback)(unsigned int msg_typd, const std::string& msg, const unsigned int msg_length);
-class HSession;
-typedef boost::shared_ptr<HSession> ptr_session;
-class HSession :public boost::enable_shared_from_this<HSession>, boost::noncopyable
+class HTcpClient;
+typedef boost::shared_ptr<HTcpClient> HTcpClientPtr;
+class HTcpClient :public boost::enable_shared_from_this<HTcpClient>, boost::noncopyable
 {
-	HSession(io_service &ios, ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback);
+    HTcpClient(io_service &ios, ip::address& local_addr, ip::address& remote_addr, unsigned short port, HNetworkApp* app);
 
 	void start();
 	void stop();
@@ -27,12 +22,15 @@ public:
 	bool is_connected(); 
 	void on_connect(const boost::system::error_code& err);
 	void do_read();
-	void on_read(const boost::system::error_code& err, size_t bytes);
-	void do_write(const std::string msg);
+    void on_read(const boost::system::error_code& err);
+    void send_msg(char* msg,int length);
+    void do_write(const std::string msg);
 	void on_write(const boost::system::error_code& err, size_t bytes);
 
-	static ptr_session start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port, Callback callback);
+    //外部调用start返回指针 暂时用不到
+    static HTcpClientPtr start(io_service &ios, const ip::address& local_addr, ip::address& remote_addr, unsigned short port);
 private:
+    HMsg m_msg;
 	bool b_is_connected;
 	ip::tcp::socket sock_;
 	ip::tcp::endpoint local_ep;
@@ -41,9 +39,9 @@ private:
 	char read_buffer_[max_msg];
 	char write_buffer_[max_msg];
 	deadline_timer connect_timer;
-	Callback m_callback;
+    HNetworkApp* m_pNetworkApp;
 };
-
+/*
 class AsyncTCPClient : public boost::noncopyable
 {
 public:
