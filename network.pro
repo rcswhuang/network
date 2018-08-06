@@ -52,11 +52,12 @@ HEADERS  += networkapi.h \
 RESOURCES += \
     #network.qrc
 
-#LIBS +=  -L../lib/lib64-boost-vc12
+
 win32{
     UI_DIR = temp/ui
     MOC_DIR = temp/moc
     OBJECTS_DIR	= temp/obj
+    LIBS +=  -L../lib/lib64-boost-vc12
     #LIBS += \
          #../lib/lib64-msvc-12.0/libboost_system-vc120-mt-gd-1_60.lib \
          #../lib/lib64-msvc-12.0/libboost_date_time-vc120-mt-gd-1_60.lib \
@@ -66,7 +67,7 @@ win32{
          #../lib/lib64-msvc-12.0/libboost_chrono-vc120-mt-gd-1_60.lib \
 }
 
-unix {
+unix{
         #UI_DIR	= temp/ui
         #MOC_DIR	= temp/moc
         #OBJECTS_DIR = temp/obj

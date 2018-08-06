@@ -1,4 +1,4 @@
-#include "hclient.h"
+ï»¿#include "hclient.h"
 
 HTcpClient::HTcpClient(io_service &ios, ip::address& local_addr, ip::address& remote_addr, unsigned short port, HNetworkApp* app)
 :sock_(ios), connect_timer(ios, boost::posix_time::seconds(10)),m_pNetworkApp(app)
@@ -10,7 +10,7 @@ HTcpClient::HTcpClient(io_service &ios, ip::address& local_addr, ip::address& re
 
 	remote_ep.address(remote_addr);
 	remote_ep.port(port);
-	//Æô¶¯¶¨Ê±Æ÷
+	//å¯åŠ¨å®šæ—¶å™¨
 	//connect_timer.expires_at(boost::posix_time::seconds(1));
     connect_timer.async_wait(boost::bind(&HTcpClient::restart, this,asio::placeholders::error));
 }
@@ -43,7 +43,7 @@ void HTcpClient::on_connect(const boost::system::error_code& err)
 	}
 	else
 	{
-		b_is_connected = false;//Î´Á¬½ÓÉÏ
+		b_is_connected = false;//æœªè¿žæŽ¥ä¸Š
 		//stop();
 	}
 }
@@ -55,7 +55,11 @@ void HTcpClient::do_read()
 
 void HTcpClient::on_read(const boost::system::error_code& err)
 {
-    if(err); //stop();
+    if(err)
+    {
+        b_is_connected = true;
+        return;
+    }
     std::string time = to_simple_string(second_clock::local_time());
     int ip = remote_ep.address().to_v4().to_ulong();
     m_pNetworkApp->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),ip,time);
@@ -95,6 +99,7 @@ void HTcpClient::do_write(const boost::system::error_code& err)
     else
     {
         //stop();
+        b_is_connected = true;
         std::ostringstream os;
         os.str().reserve(128);
         os << sock_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
@@ -141,7 +146,7 @@ HTcpClientPtr HTcpClient::start(io_service &ios, const ip::address& local_addr, 
 
 
 
-/////////////////////////////////////////////////////¿Í»§¶ËÀà////////////////////////////////////////////
+/////////////////////////////////////////////////////å®¢æˆ·ç«¯ç±»////////////////////////////////////////////
  /*
 void AsyncTCPClient::create_threads(unsigned short thread_pool_size)
 {
