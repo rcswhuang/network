@@ -1,5 +1,8 @@
 ﻿#include "hmsg.h"
-
+/*
+ * HMsg类有header_length,主要原因是用了async_read函数先读头结构的，如果头结构正确，获取到报文长度，则接着读报文
+ * 所以要求规约头里面必须包含整个报文长度。不过现在规约基本上都是如此定义的。
+*/
 void HMsg::clear()
 {
     memset(msg_,0,sizeof(max_message_length));

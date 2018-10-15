@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -12,41 +12,38 @@ TARGET = network
 TEMPLATE = app
 CONFIG += qt warn_on thread exceptions
 DEFINES += NETWORK_DLL
-DESTDIR = ..\lib
 
 
 INCLUDEPATH += \
-              ../include \
-#              ../include/boost
-#LIBPATH += \
-#              D:\qt-workspace\lib\lib64-msvc-12.0 \
+              ../include
 
 SOURCES += main.cpp\
     #hprotocol.cpp \
     #hmessage.cpp \
-    hclient.cpp \
+    #hclient.cpp \
     hmsg.cpp \
     hnetthread.cpp \
     hnetmonitor.cpp \
     hmyhighligher.cpp \
     hnetglobal.cpp \
-    hnetworkapp.cpp \
-    hconnect.cpp \
-    htcpserver.cpp
+    htcpserver.cpp \
+    hnetmanager.cpp \
+    htcpconnect.cpp
     #hnethandle.cpp
 
-HEADERS  += networkapi.h \
+HEADERS  += \
     #hprotocol.h \
     #hmessage.h \
-    hclient.h \
+    #hclient.h \
     hmsg.h \
     hnetthread.h \
     hnetmonitor.h \
     hmyhighligher.h \
     hnetglobal.h \
-    hnetworkapp.h \
-    hconnect.h \
-    htcpserver.h
+    htcpserver.h \
+    hnetmanager.h \
+    htcpconnect.h \
+    hnetworkdef.h
     #hnethandle.h
 
 RESOURCES += \
@@ -58,20 +55,13 @@ win32{
     MOC_DIR = temp/moc
     OBJECTS_DIR	= temp/obj
     LIBS +=  -L../lib/lib64-boost-vc12
-    #LIBS += \
-         #../lib/lib64-msvc-12.0/libboost_system-vc120-mt-gd-1_60.lib \
-         #../lib/lib64-msvc-12.0/libboost_date_time-vc120-mt-gd-1_60.lib \
-         #../lib/lib64-msvc-12.0/libboost_regex-vc120-mt-gd-1_60.lib \
-         #../lib/lib64-msvc-12.0/libboost_atomic-vc120-mt-gd-1_60.lib \
-         #../lib/lib64-msvc-12.0/libboost_thread-vc120-mt-gd-1_60.lib \
-         #../lib/lib64-msvc-12.0/libboost_chrono-vc120-mt-gd-1_60.lib \
 }
 
 unix{
         #UI_DIR	= temp/ui
         #MOC_DIR	= temp/moc
         #OBJECTS_DIR = temp/obj
-      LIBS += -L../lib/lib64-linux-boost \
+      LIBS += -L../lib/lib64-boost-linux \
             -lboost_system-mt \
             -lboost_date_time-mt \
             -lboost_regex-mt \

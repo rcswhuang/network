@@ -1,19 +1,16 @@
-﻿#include "hconnect.h"
+﻿#include "htcpconnect.h"
 #include "htcpserver.h"
-#include "hnetworkapp.h"
-extern QMutex g_msg_mutex;
-extern std::list<ShowMsg*> g_msg_list;
-extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
+#include "hnetmanager.h"
 extern void add_msg_for_show(unsigned short type,std::string msg);
 
-HConnect::HConnect(io_service& ios,HNetworkApp* app):
-socket_(ios),m_pNetWorkApp(app)
+HTcpConnect::HTcpConnect(io_service& ios):
+socket_(ios)
 {
     status_ = INITCONNECT;
     m_n_over_time = 0;
 }
 
-HConnect::~HConnect()
+HTcpConnect::~HTcpConnect()
 {
     stop();
     while(!m_lp_send_list.empty())
@@ -24,44 +21,43 @@ HConnect::~HConnect()
     }
 }
 
-ip::tcp::socket& HConnect::sokcet()
+ip::tcp::socket& HTcpConnect::sokcet()
 {
     return socket_;
 }
 
-void HConnect::start()
+void HTcpConnect::start(HNetManager* manager)
 {
+    m_pNetManager = manager;
     status_ = CONNECTED;
     socket_.set_option(boost::asio::ip::tcp::acceptor::linger(true, 0));
     socket_.set_option(boost::asio::socket_base::keep_alive(true));
     do_read_header();
 }
 
-void HConnect::stop()
+void HTcpConnect::stop()
 {
-    std::ostringstream os;
-    os.str().reserve(128);
-    os << "Connection stop	" << socket_.remote_endpoint()
-            << "	=\\=>	" << socket_.local_endpoint();
-    //LOG(TRACE) << "--HConnect-- " << os.str() << "\n";
-
     socket_.close();
     status_ = CLOSED;
+    std::ostringstream os;
+    os.str().reserve(128);
+    os << "TcpClinet: " << socket_.remote_endpoint()<<"is stop!";
+    add_msg_for_show(MSG_ERROR,os.str());
 }
 
-int HConnect::getip()
+int HTcpConnect::getip()
 {
     return socket_.remote_endpoint().address().to_v4().to_ulong();
 }
 
 
-void HConnect::do_read_header()
+void HTcpConnect::do_read_header()
 {
     m_msg.clear();
-    async_read(socket_, asio::buffer(m_msg.data(),m_msg.header_length), boost::bind(&HConnect::handle_read_header_data,this,asio::placeholders::error));
+    async_read(socket_, asio::buffer(m_msg.data(),m_msg.header_length), boost::bind(&HTcpConnect::handle_read_header_data,this,asio::placeholders::error));
 }
 
-void HConnect::handle_read_header_data(const err_code & err)
+void HTcpConnect::handle_read_header_data(const err_code & err)
 {
     if (!err && m_msg.analy_header())
     {
@@ -70,24 +66,24 @@ void HConnect::handle_read_header_data(const err_code & err)
     else
     {
         stop();//表示链接中断等异常情况
-        std::ostringstream os; //信息可以加入时间
+        std::ostringstream os;
         os.str().reserve(128);
-        os << socket_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
+        os << socket_.remote_endpoint().address().to_v4().to_string() << ":Connection is interrupted!";
         add_msg_for_show(MSG_ERROR,os.str());
     }
 }
 
-void HConnect::do_read()
+void HTcpConnect::do_read()
 {
-    async_read(socket_,asio::buffer(m_msg.data(),m_msg.data_length()),boost::bind(&HConnect::handle_read_data,this,asio::placeholders::error));
+    async_read(socket_,asio::buffer(m_msg.data(),m_msg.data_length()),boost::bind(&HTcpConnect::handle_read_data,this,asio::placeholders::error));
 }
 
-void HConnect::handle_read_data(const err_code & err)
+void HTcpConnect::handle_read_data(const err_code & err)
 {
     if (!err)
     {
         std::string time = to_simple_string(second_clock::local_time());
-        m_pNetWorkApp->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),getip(),time);//链路层报文:需要互斥定时来进行处理
+        m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),getip(),time);//链路层报文:需要互斥定时来进行处理
         m_n_over_time = 0;
         do_read_header();
     }
@@ -96,12 +92,12 @@ void HConnect::handle_read_data(const err_code & err)
        stop();
        std::ostringstream os;
        os.str().reserve(128);
-       os << socket_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
+       os << socket_.remote_endpoint().address().to_v4().to_string() << ":Connection is interrupted!";
        add_msg_for_show(MSG_ERROR,os.str());
     }
 }
 
-void HConnect::send_msg(char* p,int len)
+void HTcpConnect::send_msg(char* p,int len)
 {
     if(!p) return;
     HMsg *msg = new HMsg;
@@ -113,18 +109,18 @@ void HConnect::send_msg(char* p,int len)
     if(!m_lp_send_list.empty())
     {
         HMsg* p_msg = pop_msg_from_list();
-        boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HConnect::handle_write,this,asio::placeholders::error));
+        boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
     }
 }
 
-void  HConnect::push_msg_to_list(HMsg* msg)
+void HTcpConnect::push_msg_to_list(HMsg* msg)
 {
     m_send_mutex.lock();
     m_lp_send_list.push_back(msg);
     m_send_mutex.unlock();
 }
 
-HMsg* HConnect::pop_msg_from_list()
+HMsg* HTcpConnect::pop_msg_from_list()
 {
     HMsg* msg = NULL;
     m_send_mutex.lock();
@@ -134,7 +130,7 @@ HMsg* HConnect::pop_msg_from_list()
     return msg;
 }
 
-HMsg* HConnect::take_msg_from_list()
+HMsg* HTcpConnect::take_msg_from_list()
 {
     HMsg* msg = NULL;
     m_send_mutex.lock();
@@ -147,7 +143,7 @@ HMsg* HConnect::take_msg_from_list()
     return msg;
 }
 
-void HConnect::handle_write(const err_code &err)
+void HTcpConnect::handle_write(const err_code &err)
 {
     if(!err)
     {
@@ -158,7 +154,7 @@ void HConnect::handle_write(const err_code &err)
                 delete front;
 
             HMsg* p_msg = pop_msg_from_list();
-            boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HConnect::handle_write,this,asio::placeholders::error));
+            boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
         }
     }
     else

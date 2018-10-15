@@ -1,16 +1,23 @@
 ﻿#include "htcpserver.h"
-#include "hconnect.h"
-#include "hnetworkapp.h"
-//////////////////////////////////////////HServer///////////////////////////////////
-HTcpServer::HTcpServer(io_service& io,std::string ip, int port,HNetworkApp *app):m_ios(io),m_endpoint(ip::address::from_string(ip),port),
-  m_p_network(app),m_acceptor(m_ios,m_endpoint)
-{
+#include "htcpconnect.h"
+#include "hnetmanager.h"
 
+extern void add_msg_for_show(unsigned short type,std::string msg);
+//////////////////////////////////////////HServer///////////////////////////////////
+HTcpServer::HTcpServer(io_service& io,std::string ip, int port):m_ios(io),m_endpoint(ip::address::from_string(ip),port)
+{
+    m_ptrAcceptor = boost::shared_ptr<tcp::acceptor>(new tcp::acceptor(m_ios,m_endpoint));
 }
 
-void HTcpServer::start()
+HTcpServer::~HTcpServer()
 {
-    m_acceptor.listen();
+    //创建的连接全部析构掉
+}
+
+void HTcpServer::start(HNetManager* manager)
+{
+    m_pNetManager = manager;
+    m_ptrAcceptor->listen();
     init_accept();
 }
 
@@ -21,7 +28,7 @@ void HTcpServer::run()
 
 void HTcpServer::stop()
 {
-    m_acceptor.close();
+    m_ptrAcceptor->close();
 }
 
 int HTcpServer::getip()
@@ -31,11 +38,11 @@ int HTcpServer::getip()
 
 void HTcpServer::init_accept()
 {
-    HConnectPtr connect = HConnectPtr(new HConnect(m_ios,m_p_network));
-    m_acceptor.async_accept(connect->sokcet(), boost::bind(&HTcpServer::handle_accept, this,asio::placeholders::error,connect));
+    HTcpConnectPtr connect = HTcpConnectPtr(new HTcpConnect(m_ios));
+    m_ptrAcceptor->async_accept(connect->sokcet(), boost::bind(&HTcpServer::handle_accept, this,asio::placeholders::error,connect));
 }
 
-void HTcpServer::handle_accept(const boost::system::error_code & ec,HConnectPtr pClientPtr)
+void HTcpServer::handle_accept(const boost::system::error_code & ec,HTcpConnectPtr pTcpClientPtr)
 {
     if (!ec)
     {
@@ -45,22 +52,21 @@ void HTcpServer::handle_accept(const boost::system::error_code & ec,HConnectPtr 
         return;
     }
 
-    ip::tcp::socket& socket_ = pClientPtr->sokcet();
+    ip::tcp::socket& socket_ = pTcpClientPtr->sokcet();
     std::ostringstream os;
     os.str().reserve(128);
-    os << "Accept a new connection:	" << socket_.remote_endpoint()
-        << "	==>	" << socket_.local_endpoint() << "\n";
-    int ip = pClientPtr->getip();
-    //m_clients[ip] = pClientPtr;
-    m_p_network->conn_map[ip] = pClientPtr;
+    os << "Accept a new connection:	" << socket_.remote_endpoint();
+    add_msg_for_show(MSG_INFORMATION,os.str());
+    int ip = pTcpClientPtr->getip();
+    m_pNetManager->conn_map[ip] = pTcpClientPtr;
     init_accept();
-    pClientPtr->start();
+    pTcpClientPtr->start(m_pNetManager);
 
 }
 
-HConnectPtr HTcpServer::find_tcp_connect_ptr(int ip)
+HTcpConnectPtr HTcpServer::find_tcp_connect_by_ip(int ip)
 {
-    std::map<int,HConnectPtr>::const_iterator it = m_connects.find(ip);
+    std::map<int,HTcpConnectPtr>::const_iterator it = m_connects.find(ip);
     while(it != m_connects.end())
     {
         return m_connects[ip];

@@ -1,7 +1,6 @@
 ﻿#ifndef HMSG_H_
 #define HMSG_H_
-#include "networkapi.h"
-
+#include "hnetworkdef.h"
 class HMsg
 {
 public:

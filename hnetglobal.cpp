@@ -1,5 +1,21 @@
 ﻿#include "hnetglobal.h"
 
+boost::mutex g_recv_mutex;
+std::list<RecvData*> g_recv_list;
+void add_data_to_recv_list(RecvData* recv_data);
+RecvData* remove_data_from_recv_list();
+void clear_recv_list();
+
+QMutex g_msg_mutex;
+std::list<ShowMsg*> g_msg_list;
+void add_msg_to_list(ShowMsg* showmsg);
+ShowMsg* remove_msg_from_list();
+void clear_msg_list();
+
+void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
+void add_msg_for_show(unsigned short type,std::string msg);
+
+
 //直接发送显示消息(不含报文)
 void add_msg_for_show(unsigned short type,std::string show)
 {
@@ -9,7 +25,6 @@ void add_msg_for_show(unsigned short type,std::string show)
     msg->type = type;
     msg->info = show;
     add_msg_to_list(msg);
-
 }
 
 //发送显示消息(含报文)
@@ -54,9 +69,46 @@ void clear_msg_list()
     {
         ShowMsg* pmsg = *it;
         if(pmsg->data)
-            delete pmsg->data;
+            delete[] pmsg->data;
         delete pmsg;
     }
     g_msg_list.clear();
     g_msg_mutex.unlock();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**************************************全局函数******************************************/
+void add_data_to_recv_list(RecvData* recv_data)
+{
+    g_recv_mutex.lock();
+    g_recv_list.push_back(recv_data);
+    g_recv_mutex.unlock();
+}
+
+RecvData* remove_data_from_recv_list()
+{
+    RecvData* p_recv_data = NULL;
+    g_recv_mutex.lock();
+    if(g_recv_list.size() > 0)
+    {
+        p_recv_data = (RecvData*)g_recv_list.front();
+        g_recv_list.pop_front();
+    }
+    g_recv_mutex.unlock();
+    return p_recv_data;
+}
+
+void clear_recv_list()
+{
+    g_recv_mutex.lock();
+    std::list<RecvData*>::iterator it;
+    for(it = g_recv_list.begin(); it != g_recv_list.end(); ++it)
+    {
+        RecvData* pdata = *it;
+        if(pdata->data)
+            delete[] pdata->data;
+        delete pdata;
+    }
+    g_recv_list.clear();
+    g_recv_mutex.unlock();
 }

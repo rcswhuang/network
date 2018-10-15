@@ -3,9 +3,8 @@
 #include "hmyhighligher.h"
 #include "hnetthread.h"
 #include <QTimer>
-extern QMutex g_msg_mutex;
-extern std::list<ShowMsg*> g_msg_list;
 extern ShowMsg* remove_msg_from_list();
+extern void clear_msg_list();
 /*********************************************************************************************************/
 HNetMonitor::HNetMonitor(QWidget *parent) :
     QMainWindow(parent),
@@ -19,19 +18,13 @@ HNetMonitor::HNetMonitor(QWidget *parent) :
 HNetMonitor::~HNetMonitor()
 {
     delete ui;
-    while(!g_msg_list.empty())
-    {
-        //显示消息
-        ShowMsg *msg = remove_msg_from_list();
-        if(msg->data)
-            delete msg->data;
-        delete msg;
-    }
+    delete m_pNetThread;
+    clear_msg_list();
 }
 
 void HNetMonitor::init()
 {
-    refreshTimer = new QTimer(this);
+    QTimer *refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(procShowMsgList()));
     refreshTimer->start(1000);
     m_pNetThread = new HNetThread(this);
@@ -41,9 +34,6 @@ void HNetMonitor::init()
 //定时处理函数 显示或者加入日志
 void HNetMonitor::procShowMsgList()
 {
-    if(!g_msg_list.empty())
-        return;
-
     ShowMsg *msg = remove_msg_from_list();
     while(!msg)
     {
@@ -65,7 +55,13 @@ void HNetMonitor::showMsgToTextEdit(ShowMsg *msg)
         strType = QString("error: "); //主要是链路关闭等异常情况
         QString strMsg = msg->info.c_str();
         strMsg += " \n\n";
-        //发给链路层
+        ui->linkTextEdit->insertPlainText(strMsg);
+    }
+    else if(MSG_INFORMATION)
+    {
+        strType = QString("information: "); //主要是接收连接等信息提示
+        QString strMsg = msg->info.c_str();
+        strMsg += " \n\n";
         ui->linkTextEdit->insertPlainText(strMsg);
     }
     else

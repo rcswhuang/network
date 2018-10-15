@@ -1,21 +1,21 @@
 ﻿#pragma once
-#include "networkapi.h"
+#include "hnetworkdef.h"
 #include "hmsg.h"
-class HNetworkApp;
-class HConnect :public boost::enable_shared_from_this<HConnect>, boost::noncopyable
+class HNetManager;
+class HTcpConnect :public boost::enable_shared_from_this<HTcpConnect>, boost::noncopyable
 {
 public:
 	typedef std::vector<char> buffer_char;
 public:
-    HConnect(io_service& io_service,HNetworkApp* app);
-    ~HConnect();
-	ip::tcp::socket& sokcet();
-
+    HTcpConnect(io_service& io_service);
+    ~HTcpConnect();
 public:
-	void start();
+    tcp::socket& sokcet();
+    void start(HNetManager* manager);
 	void stop();
     int getip();//返回IP
     int status(){return status_;}
+
 public:
     void send_msg(char* p,int len);
     void  push_msg_to_list(HMsg* msg);
@@ -30,7 +30,7 @@ private:
 	void do_read();
 
 public:
-    HNetworkApp* m_pNetWorkApp;
+    HNetManager* m_pNetManager;
     int m_n_over_time;//超时
 
 private:
@@ -41,4 +41,4 @@ private:
 	ip::tcp::socket socket_;
 };
 
-typedef boost::shared_ptr<HConnect>  HConnectPtr;
+typedef boost::shared_ptr<HTcpConnect>  HTcpConnectPtr;
