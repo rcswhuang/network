@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QVector>
-#include "hnetworkapi.h"
+#include "hnetworkdef.h"
 class HProtocol : public QObject
 {
     Q_OBJECT

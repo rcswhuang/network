@@ -108,7 +108,7 @@ void HNetManager::handle_send(RecvData *senddata)
         }
     }
     else if(MODE_MASTER_RESERVER == m_send_mode) //主备模式
-    {
+    {*/
         std::string info = "linkA";
         if(m_tcpServerA->m_p_client_connect->status() == CONNECTED)
         {
@@ -120,7 +120,7 @@ void HNetManager::handle_send(RecvData *senddata)
             m_tcpServerB->m_p_client_connect->send_msg(senddata->data,senddata->len);
         }
         add_msg_for_show(MSG_LINK_SEND,senddata,info);
-    }*/
+    //}
 }
 
 void HNetManager::handle_send(char* pData,int nLength)

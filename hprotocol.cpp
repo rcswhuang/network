@@ -1,7 +1,5 @@
 ﻿#include "hprotocol.h"
-#include "publicdata.h"
-#include "HNetApp.h"
-#include "hnetglobal.h"
+#include "hkernelapi.h"
 /*
  * 规约解析模块，以后所有的其他规约，都可以用这种模式来进行构建
  * 不需要考虑网络层的转发情况
@@ -9,6 +7,7 @@
  * 这个时候需要把规约层和网络层的关系要独立开。特别是多个连接的时候。
  * 这里是把规约层和网络层写在一起了。缺点是每个新规约都要拷贝重复的网络层代码
 */
+extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
 
 HProtocol* HProtocol::m_pInstance = NULL;
 
@@ -132,13 +131,13 @@ void HProtocol::handleReceive(RecvData* recvData)
 
 void HProtocol::handleSend(char* pData,int length)
 {
-    HNetApp::instance()->handle_send(pData,length);
+    //HNetApp::instance()->handle_send(pData,length);
 }
 
 void HProtocol::handleSend(RecvData* recvData)
 {
     //如果规约处理较多，需要互斥
-    HNetApp::instance()->handle_send(recvData);
+    //HNetApp::instance()->handle_send(recvData);
     add_msg_for_show(MSG_APP_SEND,recvData,"no");
 }
 

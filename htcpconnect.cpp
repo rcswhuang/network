@@ -50,7 +50,6 @@ int HTcpConnect::getip()
     return socket_.remote_endpoint().address().to_v4().to_ulong();
 }
 
-
 void HTcpConnect::do_read_header()
 {
     m_msg.clear();

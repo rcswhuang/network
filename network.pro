@@ -18,9 +18,7 @@ INCLUDEPATH += \
               ../include
 
 SOURCES += main.cpp\
-    #hprotocol.cpp \
-    #hmessage.cpp \
-    #hclient.cpp \
+    hprotocol.cpp \
     hmsg.cpp \
     hnetthread.cpp \
     hnetmonitor.cpp \
@@ -28,13 +26,11 @@ SOURCES += main.cpp\
     hnetglobal.cpp \
     htcpserver.cpp \
     hnetmanager.cpp \
-    htcpconnect.cpp
-    #hnethandle.cpp
+    htcpconnect.cpp \
+    hnethandle.cpp
 
 HEADERS  += \
-    #hprotocol.h \
-    #hmessage.h \
-    #hclient.h \
+    hprotocol.h \
     hmsg.h \
     hnetthread.h \
     hnetmonitor.h \
@@ -43,8 +39,8 @@ HEADERS  += \
     htcpserver.h \
     hnetmanager.h \
     htcpconnect.h \
-    hnetworkdef.h
-    #hnethandle.h
+    hnetworkdef.h \
+    hnethandle.h
 
 RESOURCES += \
     #network.qrc
