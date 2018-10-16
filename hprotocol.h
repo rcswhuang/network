@@ -2,7 +2,7 @@
 #define HPROTOCOL_H
 
 //规约解析部分
-#include <QObject>
+#include <QThread>
 #include <QTimer>
 #include <QVector>
 #include "hnetworkdef.h"

@@ -66,7 +66,7 @@ typedef struct _tagnetData
     int len;
     //int ip;
     //std::string time;//发送时间
-}RecvData,SndData;
+}RecvData,SndData,ShowData;
 
 /**************************************************************************************************************/
 //消息显示设置
@@ -105,8 +105,8 @@ typedef struct _tagShowMsg
     unsigned short type;//消息类型
     char* data;//报文数据
     int len; //报文长度
-    int ip; //发送地点
-    std::string time;//发送时间
+    //int ip; //发送地点
+    //std::string time;//发送时间
     std::string info;//消息文字
 }ShowMsg;
 

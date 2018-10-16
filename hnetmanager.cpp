@@ -4,8 +4,9 @@
 #include <QTimerEvent>
 
 extern void add_data_to_recv_list(RecvData* recv_data);
-extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
+extern void add_data_for_show(unsigned short type, char*data,int len,std::string info);
 extern SndData* remove_data_from_send_list();
+extern void clear_send_list();
 bool is_valid_ip(const char *ip)
 {
     /* 定义正则表达式 */
@@ -21,7 +22,7 @@ HNetManager::HNetManager()
 
 HNetManager::~HNetManager()
 {
-    stop();
+    clear_send_list();
     if(m_tcpServerA)
     {
         delete m_tcpServerA;
@@ -33,6 +34,7 @@ HNetManager::~HNetManager()
         delete m_tcpServerB;
         m_tcpServerB = NULL;
     }
+    stop();
 }
 
 void HNetManager::config()
@@ -94,12 +96,12 @@ void HNetManager::handle_send(char* pData,int nLength)
         std::string info = "linkA";
         if(m_tcpServerA->m_connects->status() == CONNECTED)
         {
-            m_tcpServerA->m_p_client_connect->send_msg(pData,nLength);
+            m_tcpServerA->m_connects->send_msg(pData,nLength);
         }
         else if(m_tcpServerB->m_connects->status() == CONNECTED)
         {
             info = "linkB";
-            m_tcpServerB->m_p_client_connect->send_msg(pData,nLength);
+            m_tcpServerB->m_connects->send_msg(pData,nLength);
         }
     }
 }
@@ -165,7 +167,7 @@ void HNetManager::proc_timer()//处理定时函数
         }
     }*/
 
-    SndData* p_send_data =  remove_data_from_send_list();();
+    SndData* p_send_data =  remove_data_from_send_list();
     while(p_send_data)
     {
         if(p_send_data->data && p_send_data->len > 0)

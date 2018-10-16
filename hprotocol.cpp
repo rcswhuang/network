@@ -1,15 +1,16 @@
 ﻿#include "hprotocol.h"
 #include "hkernelapi.h"
-#include "publicdata.h"
 /*
  * 向监控:
  * 主动发送:
  *  1.发送遥控请求；2.发送虚遥信,3.发送单遥信闭锁,4.发送全遥信闭锁。注意
 */
-extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
+//////////////////////////////////////////////共享队列////////////////////////////////////////////////////////////////
+extern void add_data_for_show(unsigned short type, char*data,int len,std::string info);
 extern RecvData* remove_data_from_recv_list();
 extern void clear_recv_list();
 extern void add_data_to_send_list(SndData* sndData);
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 HProtocol::HProtocol()
 {
 
@@ -71,7 +72,7 @@ void HProtocol::loadVirtualYx()
             {
                 ushort wDgtNo;
                 ushort wDgtIndex = (ushort)-1;
-                ::getAttr(handle,ATTR_DGT_TOSCADAINDEX,&wDgtIndex);
+                //::getAttr(handle,ATTR_DGT_TOSCADAINDEX,&wDgtIndex);//huangw
                 if(wDgtIndex != (ushort)-1)
                 {
                    ::getAttr(handle,ATTR_DGT_NO,&wDgtNo);
@@ -101,7 +102,7 @@ void HProtocol::loadVirtualYx()
 void HProtocol::handleReceive(RecvData* recvData)
 {
     if(!recvData) return;
-    add_msg_for_show(MSG_APP_RECV,recvData,"no");
+
     char* pStart = recvData->data;
     uchar funNo = *(uchar*)pStart;
     pStart += sizeof(uchar);
@@ -116,11 +117,12 @@ void HProtocol::handleReceive(RecvData* recvData)
     case 0x91: processAllYc(pStart,length);break;
     case 0x96: processTimer(pStart,length);break;
     }
-
+    add_data_for_show(MSG_APP_RECV,recvData->data,recvData->len,"link");
 }
 
 void HProtocol::handleSend(char* pData,int length)
 {
+    add_data_for_show(MSG_APP_SEND,pData,length,"link");
     SndData* sndData = new SndData;
     sndData->data = new char[length];
     memcpy(sndData->data,pData,length);
@@ -134,7 +136,7 @@ void HProtocol::processHand(char* pData,int length)
     if(!pData) return;
     char* pStart = pData;
     uchar btType = *(uchar*)pStart;
-    if(btState == 0x00 && 0x01 == btType)
+    //if(btState == 0x00 && 0x01 == btType)//huangw
     {
         int length = 5;
         char* pSndData = new char[length];
@@ -283,7 +285,7 @@ void HProtocol::sendAllVYx()
             for(uchar j = 0; j < 8;j++)
             {
                 wYxIndex++;
-                dbHandle = getDbHandle(*(p_sendToScadaStationList + wStationIndex),TYPE_DIGITAL,(p_sendToScadaYXList+wStationIndex)->at(wYxIndex));
+                dbHandle = getDbHandle(*(p_sendToScadaStationList + wStationIndex),TYPE_DIGITAL,(p_sendToScadaYXList+wStationIndex)->at(wYxIndex),0);
                 if(isValidDbHandle(dbHandle))
                 {
                     getAttr(dbHandle,ATTR_DGT_VALUE,&btValue);

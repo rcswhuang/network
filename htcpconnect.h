@@ -18,9 +18,9 @@ public:
 
 public:
     void send_msg(char* p,int len);
-    void  push_msg_to_list(HMsg* msg);
-    HMsg* pop_msg_from_list();
-    HMsg* take_msg_from_list();
+    //void  push_msg_to_list(HMsg* msg);
+    //HMsg* pop_msg_from_list();
+    //HMsg* take_msg_from_list();
 
 private:
     void handle_read_data(const err_code & err);
@@ -34,7 +34,7 @@ public:
     int m_n_over_time;//超时
 
 private:
-    std::list<HMsg*> m_lp_send_list;
+    //std::list<HMsg*> m_lp_send_list;
     boost::mutex m_send_mutex;
     HMsg m_msg;
 	int status_;

@@ -1,5 +1,5 @@
 ﻿#include "hnethandle.h"
-#include "netexport.h"
+#include "hnetworkexport.h"
 #include <QList>
 
 

@@ -26,8 +26,8 @@ public:
     void handle_send(char* pData,size_t len);
 public:
     HNetManager* m_pNetManager;
-private:
     HTcpConnectPtr m_connects;
+private:
     ptr_acceptor m_ptrAcceptor;
     tcp::endpoint m_endpoint;
     io_service &m_ios;

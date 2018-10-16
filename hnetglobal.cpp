@@ -1,5 +1,6 @@
 ﻿#include "hnetworkdef.h"
-
+#include <QtGlobal>
+#include <QMutex>
 /////////////////////////////////////////////接受共享队列///////////////////////////////////////
 boost::mutex g_recv_mutex;
 std::list<RecvData*> g_recv_list;
@@ -8,23 +9,34 @@ RecvData* remove_data_from_recv_list();
 void clear_recv_list();
 
 /////////////////////////////////////////////消息共享队列//////////////////////////////////////
-QMutex g_msg_mutex;
+boost::mutex g_msg_mutex;
 std::list<ShowMsg*> g_msg_list;
 void add_msg_to_list(ShowMsg* showmsg);
 ShowMsg* remove_msg_from_list();
 void clear_msg_list();
 
-void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
+void add_data_for_show(unsigned short type, char*data,int len,std::string info);
 void add_msg_for_show(unsigned short type,std::string msg);
-///////////////////////////////////////////////////////////////////////////////////////////////
-QMutex g_snd_mutex;
+///////////////////////////////////////////////发送共享队列////////////////////////////////////////////////
+boost::mutex g_snd_mutex;
 std::list<SndData*> g_send_list;
 void add_data_to_send_list(SndData* sndData);
 SndData* remove_data_from_send_list();
 void clear_send_list();
 
-
-
+//////////////////////////////////////显示消息报文队列//////////////////////////////////////////////////////////
+void add_data_for_show(unsigned short type, char*sdata,int len,std::string info)
+{
+    if(!sdata) return;
+    ShowMsg* msg = new ShowMsg;
+    msg->type = type;
+    msg->len = len;
+    memcpy(msg->data,sdata,len);
+    //msg->ip = rdata->ip;
+    //msg->time = rdata->time;
+    msg->info = info;
+    add_msg_to_list(msg);
+}
 
 //直接发送显示消息(不含报文)
 void add_msg_for_show(unsigned short type,std::string show)
@@ -34,20 +46,6 @@ void add_msg_for_show(unsigned short type,std::string show)
     ShowMsg* msg = new ShowMsg;
     msg->type = type;
     msg->info = show;
-    add_msg_to_list(msg);
-}
-
-//发送显示消息(含报文)
-void add_msg_for_show(unsigned short type, RecvData* rdata,std::string info)
-{
-    if(!rdata) return;
-    ShowMsg* msg = new ShowMsg;
-    msg->type = type;
-    msg->len = rdata->len;
-    memcpy(msg->data,rdata->data,rdata->len);
-    msg->ip = rdata->ip;
-    msg->time = rdata->time;
-    msg->info = info;
     add_msg_to_list(msg);
 }
 
@@ -87,7 +85,7 @@ void clear_msg_list()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**************************************全局函数******************************************/
+/**************************************接受报文共享队列******************************************/
 void add_data_to_recv_list(RecvData* recv_data)
 {
     g_recv_mutex.lock();
@@ -121,4 +119,20 @@ void clear_recv_list()
     }
     g_recv_list.clear();
     g_recv_mutex.unlock();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void add_data_to_send_list(SndData* sndData)
+{
+
+}
+
+SndData* remove_data_from_send_list()
+{
+    return NULL;
+}
+
+void clear_send_list()
+{
+
 }

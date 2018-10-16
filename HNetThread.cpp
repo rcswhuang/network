@@ -18,7 +18,3 @@ void HNetThread::run()
     if(m_pNetManager->start())
         m_pNetManager->run();
 }
-
-
-
-

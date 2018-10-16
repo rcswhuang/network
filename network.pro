@@ -45,6 +45,7 @@ HEADERS  += \
 RESOURCES += \
     #network.qrc
 
+LIBS +=  -L../lib -lkernel
 
 win32{
     UI_DIR = temp/ui

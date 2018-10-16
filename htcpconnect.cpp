@@ -2,7 +2,7 @@
 #include "htcpserver.h"
 #include "hnetmanager.h"
 extern void add_msg_for_show(unsigned short type,std::string msg);
-
+extern void add_data_for_show(unsigned short type, char*data,int len,std::string info);
 HTcpConnect::HTcpConnect(io_service& ios):
 socket_(ios)
 {
@@ -13,12 +13,13 @@ socket_(ios)
 HTcpConnect::~HTcpConnect()
 {
     stop();
+    /*
     while(!m_lp_send_list.empty())
     {
         HMsg* front = take_msg_from_list();
         if(!front)
             delete front;
-    }
+    }*/
 }
 
 ip::tcp::socket& HTcpConnect::sokcet()
@@ -81,6 +82,7 @@ void HTcpConnect::handle_read_data(const err_code & err)
 {
     if (!err)
     {
+        add_data_for_show(MSG_LINK_RECV, m_msg.msg(),(int)m_msg.msg_length(),"link");
         m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length());//链路层报文:需要互斥定时来进行处理
         m_n_over_time = 0;
         do_read_header();
@@ -101,9 +103,28 @@ void HTcpConnect::send_msg(char* p,int len)
     HMsg *msg = new HMsg;
     memcpy(msg->data(),p,len);
     msg->set_data_length(len-HEAD_SIZE);
-    boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
+    add_data_for_show(MSG_LINK_SEND,p,len,"link");
+    boost::asio::async_write(socket_,boost::asio::buffer(msg->msg(),msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
 }
 
+void HTcpConnect::handle_write(const err_code &err)
+{
+    if(!err)
+    {
+
+    }
+    else
+    {
+        stop();
+        std::ostringstream os;
+        os.str().reserve(128);
+        os << socket_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
+        add_msg_for_show(MSG_ERROR,os.str());
+    }
+}
+
+//当多个消息发送的时候需要同步，本应用不需要
+/*
 void HTcpConnect::push_msg_to_list(HMsg* msg)
 {
     m_send_mutex.lock();
@@ -132,21 +153,7 @@ HMsg* HTcpConnect::take_msg_from_list()
     }
     m_send_mutex.unlock();
     return msg;
-}
+}*/
 
-void HTcpConnect::handle_write(const err_code &err)
-{
-    if(!err)
-    {
 
-    }
-    else
-    {
-        stop();
-        std::ostringstream os;
-        os.str().reserve(128);
-        os << socket_.remote_endpoint().address().to_v4().to_string() << "Connection is interrupted!";
-        add_msg_for_show(MSG_ERROR,os.str());
-    }
-}
 

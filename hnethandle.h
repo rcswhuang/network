@@ -1,7 +1,7 @@
 ﻿#ifndef HNETHANDLE_H
 #define HNETHANDLE_H
 
-#include "publicdata.h"
+//#include "hkernelapi.h"
 #include "hnetmonitor.h"
 class HNetHandle
 {

@@ -79,14 +79,12 @@ void HNetMonitor::showMsgToTextEdit(ShowMsg *msg)
         if(MSG_LINK_RECV == msg->type) //规约层只显示
         {
             whichTextEdit = 1;
-            QString temp = QString(msg->time.c_str()) + " " + "from：" + QString(ip::address_v4(msg->ip).to_string().c_str());
-            strType =temp  + "to " + QString(msg->info.c_str()) + QString(":<< "); //接收报文:
+            strType = QString(msg->info.c_str()) + QString(":<< "); //接收报文:
         }
         else if(MSG_LINK_SEND == msg->type)
         {
             whichTextEdit = 1;
-            QString temp = QString(msg->time.c_str()) + " " + "from：" + QString(msg->info.c_str());
-            strType =temp  + "to " + QString(ip::address_v4(msg->ip).to_string().c_str()) + QString(":>> "); //发送报文:
+            strType = QString(msg->info.c_str()) + QString(":>> "); //发送报文:
         }
 
         QString strShowMsg,strMsg;
