@@ -57,23 +57,13 @@ void HTcpServer::handle_accept(const boost::system::error_code & ec,HTcpConnectP
     os.str().reserve(128);
     os << "Accept a new connection:	" << socket_.remote_endpoint();
     add_msg_for_show(MSG_INFORMATION,os.str());
+    m_connects = pTcpClientPtr;
     int ip = pTcpClientPtr->getip();
     m_pNetManager->conn_map[ip] = pTcpClientPtr;
     init_accept();
     pTcpClientPtr->start(m_pNetManager);
 
 }
-
-HTcpConnectPtr HTcpServer::find_tcp_connect_by_ip(int ip)
-{
-    std::map<int,HTcpConnectPtr>::const_iterator it = m_connects.find(ip);
-    while(it != m_connects.end())
-    {
-        return m_connects[ip];
-    }
-    return nullptr;
-}
-
 
 //处理发送
 void HTcpServer::handle_send(char* pbuf, size_t bytes)

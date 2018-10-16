@@ -1,31 +1,17 @@
 ﻿#include "hprotocol.h"
 #include "hkernelapi.h"
+#include "publicdata.h"
 /*
- * 规约解析模块，以后所有的其他规约，都可以用这种模式来进行构建
- * 不需要考虑网络层的转发情况
- * 也可以把规约解析模块独立出来做一个，这样可能更好一点。
- * 这个时候需要把规约层和网络层的关系要独立开。特别是多个连接的时候。
- * 这里是把规约层和网络层写在一起了。缺点是每个新规约都要拷贝重复的网络层代码
+ * 向监控:
+ * 主动发送:
+ *  1.发送遥控请求；2.发送虚遥信,3.发送单遥信闭锁,4.发送全遥信闭锁。注意
 */
 extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
-
-HProtocol* HProtocol::m_pInstance = NULL;
-
-HProtocol* HProtocol::instance()
-{
-    if(m_pInstance == NULL)
-    {
-        m_pInstance = new HProtocol;
-        //m_pInstance->loadVirtualYx();
-    }
-
-    return m_pInstance;
-}
-
-
+extern RecvData* remove_data_from_recv_list();
+extern void clear_recv_list();
+extern void add_data_to_send_list(SndData* sndData);
 HProtocol::HProtocol()
 {
-    //这里需要加载发送虚遥信的配置信息
 
 }
 
@@ -39,15 +25,19 @@ HProtocol::~HProtocol()
 
     if(p_sendToScadaYXList != NULL)
         delete[] p_sendToScadaYXList;
+    clear_recv_list();
+    quit();
+    wait();
 }
 
-void HProtocol::start()
+void HProtocol::run()
 {
     loadVirtualYx();
     wSendVYXTimes = 0;
     timer = new QTimer(this);
-    connect(timer,SIGNAL(timeout()),this,SLOT(timerProcessor()));
+    connect(timer,SIGNAL(timeout()),this,SLOT(timerProcessor()),Qt::DirectConnection);
     timer->start(1000);
+    this->exec();
 }
 
 void HProtocol::loadVirtualYx()
@@ -131,14 +121,11 @@ void HProtocol::handleReceive(RecvData* recvData)
 
 void HProtocol::handleSend(char* pData,int length)
 {
-    //HNetApp::instance()->handle_send(pData,length);
-}
-
-void HProtocol::handleSend(RecvData* recvData)
-{
-    //如果规约处理较多，需要互斥
-    //HNetApp::instance()->handle_send(recvData);
-    add_msg_for_show(MSG_APP_SEND,recvData,"no");
+    SndData* sndData = new SndData;
+    sndData->data = new char[length];
+    memcpy(sndData->data,pData,length);
+    sndData->len = length;
+    add_data_to_send_list(sndData);
 }
 
 //hand
@@ -516,10 +503,27 @@ void HProtocol::sendMeasureYx()
 
 void HProtocol::timerProcessor()//定时处理
 {
+    proc_recv_data();
     sendHeartBeat();
     if(--wSendVYXTimes == 0)
     {
         sendAllVYx();
         wSendVYXTimes = 30;
+    }
+}
+
+void HProtocol::proc_recv_data()
+{
+    RecvData* p_recv_data = remove_data_from_recv_list();
+    while(p_recv_data)
+    {
+        if(p_recv_data->data && p_recv_data->len > 0)
+        {
+            handleReceive(p_recv_data);
+        }
+        if(p_recv_data->data)
+            delete[] p_recv_data->data;
+        delete p_recv_data;
+        p_recv_data = remove_data_from_recv_list();
     }
 }

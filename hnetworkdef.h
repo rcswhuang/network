@@ -60,13 +60,13 @@ typedef struct _tagData
 }DATA;
 #define HEADERLEN sizeof(HEADER)
 
-typedef struct _tagRecvData
+typedef struct _tagnetData
 {
     char* data;
     int len;
-    int ip;
-    std::string time;//发送时间
-}RecvData;
+    //int ip;
+    //std::string time;//发送时间
+}RecvData,SndData;
 
 /**************************************************************************************************************/
 //消息显示设置

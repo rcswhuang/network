@@ -81,8 +81,7 @@ void HTcpConnect::handle_read_data(const err_code & err)
 {
     if (!err)
     {
-        std::string time = to_simple_string(second_clock::local_time());
-        m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length(),getip(),time);//链路层报文:需要互斥定时来进行处理
+        m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length());//链路层报文:需要互斥定时来进行处理
         m_n_over_time = 0;
         do_read_header();
     }
@@ -102,14 +101,7 @@ void HTcpConnect::send_msg(char* p,int len)
     HMsg *msg = new HMsg;
     memcpy(msg->data(),p,len);
     msg->set_data_length(len-HEAD_SIZE);
-
-    push_msg_to_list(msg);
-
-    if(!m_lp_send_list.empty())
-    {
-        HMsg* p_msg = pop_msg_from_list();
-        boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
-    }
+    boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
 }
 
 void HTcpConnect::push_msg_to_list(HMsg* msg)
@@ -146,15 +138,7 @@ void HTcpConnect::handle_write(const err_code &err)
 {
     if(!err)
     {
-        if(!m_lp_send_list.empty())
-        {
-            HMsg* front = take_msg_from_list();
-            if(!front)
-                delete front;
 
-            HMsg* p_msg = pop_msg_from_list();
-            boost::asio::async_write(socket_,boost::asio::buffer(p_msg->msg(),p_msg->msg_length()),boost::bind(&HTcpConnect::handle_write,this,asio::placeholders::error));
-        }
     }
     else
     {

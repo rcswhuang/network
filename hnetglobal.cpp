@@ -1,11 +1,13 @@
-﻿#include "hnetglobal.h"
+﻿#include "hnetworkdef.h"
 
+/////////////////////////////////////////////接受共享队列///////////////////////////////////////
 boost::mutex g_recv_mutex;
 std::list<RecvData*> g_recv_list;
 void add_data_to_recv_list(RecvData* recv_data);
 RecvData* remove_data_from_recv_list();
 void clear_recv_list();
 
+/////////////////////////////////////////////消息共享队列//////////////////////////////////////
 QMutex g_msg_mutex;
 std::list<ShowMsg*> g_msg_list;
 void add_msg_to_list(ShowMsg* showmsg);
@@ -14,6 +16,14 @@ void clear_msg_list();
 
 void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
 void add_msg_for_show(unsigned short type,std::string msg);
+///////////////////////////////////////////////////////////////////////////////////////////////
+QMutex g_snd_mutex;
+std::list<SndData*> g_send_list;
+void add_data_to_send_list(SndData* sndData);
+SndData* remove_data_from_send_list();
+void clear_send_list();
+
+
 
 
 //直接发送显示消息(不含报文)

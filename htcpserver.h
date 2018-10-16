@@ -20,7 +20,6 @@ public:
     void stop();
     int getip();
 
-    HTcpConnectPtr find_tcp_connect_by_ip(int ip);
 public:
     void init_accept();
     void handle_accept(const boost::system::error_code & code,HTcpConnectPtr conn);
@@ -28,7 +27,7 @@ public:
 public:
     HNetManager* m_pNetManager;
 private:
-    std::map<int,HTcpConnectPtr> m_connects;
+    HTcpConnectPtr m_connects;
     ptr_acceptor m_ptrAcceptor;
     tcp::endpoint m_endpoint;
     io_service &m_ios;

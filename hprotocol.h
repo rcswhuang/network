@@ -6,31 +6,27 @@
 #include <QTimer>
 #include <QVector>
 #include "hnetworkdef.h"
-class HProtocol : public QObject
+class HNetManager;
+class HProtocol : public QThread
 {
     Q_OBJECT
 public:
     typedef QVector<ushort> QUshortArray;
 public:
-    static HProtocol* instance();
-    static HProtocol* m_pInstance;
     HProtocol();
     ~HProtocol();
-
-protected:
-    QTimer* timer;//定时器
-    ushort wSendVYXTimes;
-    ushort p_sendToScadaYXStationCounts;
-    ushort* p_sendToScadaStationList;
-    QUshortArray *p_sendToScadaYXList;
 public:
-    void start();
+    virtual void run();
+
+
+public:
+    //void start();
     void loadVirtualYx();//加载虚遥信
     void handleReceive(RecvData* recvData);
     void handleSend(char* pData,int length);
-    void handleSend(RecvData* recvData);
 
     //proc
+    void proc_recv_data();
     void processHand(char* pData,int length);
     void processAllYx(char* pData,int length);
     void processChangeYx(char* pData,int length);
@@ -51,6 +47,14 @@ public:
 
 public slots:
     void timerProcessor();//定时处理
+
+protected:
+    HNetManager* m_pNetManager;
+    QTimer* timer;//定时器
+    ushort wSendVYXTimes;
+    ushort p_sendToScadaYXStationCounts;
+    ushort* p_sendToScadaStationList;
+    QUshortArray *p_sendToScadaYXList;
 };
 
 #endif // HPROTOCOL_H

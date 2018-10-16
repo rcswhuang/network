@@ -30,10 +30,7 @@ public:
     void stop();
 
     void handle_send(char* pData,int nLength);
-    void handle_send(RecvData* recvdata);
-    //统一改成定时互斥处理，单客户端，多客户端均适用
-    void handle_recv(char* pData,int nLength,int ip,std::string& time);
-    void proc_recv_data();
+    void handle_recv(char* pData,int nLength);
 
 public:
     void proc_timer();//处理定时函数

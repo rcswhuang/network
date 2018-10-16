@@ -4,10 +4,8 @@
 #include <QTimerEvent>
 
 extern void add_data_to_recv_list(RecvData* recv_data);
-extern RecvData* remove_data_from_recv_list();
-extern void clear_recv_list();
 extern void add_msg_for_show(unsigned short type, RecvData* data,std::string info);
-
+extern SndData* remove_data_from_send_list();
 bool is_valid_ip(const char *ip)
 {
     /* 定义正则表达式 */
@@ -35,7 +33,6 @@ HNetManager::~HNetManager()
         delete m_tcpServerB;
         m_tcpServerB = NULL;
     }
-    clear_recv_list();
 }
 
 void HNetManager::config()
@@ -85,59 +82,29 @@ void HNetManager::stop()
     ios.stop();
 }
 
-//谁发出 谁删除
-void HNetManager::handle_send(RecvData *senddata)
+void HNetManager::handle_send(char* pData,int nLength)
 {
-    if(!senddata)
-        return;
-    //先修改发送时间
-/*    std::string time = to_simple_string(second_clock::local_time());
-    senddata->time = time;
     //双主模式
     if(MODE_DOUBLE_MASTER == m_send_mode)
     {
-        int ip = senddata->ip;
-        HConnectPtr conn = conn_map[ip];
-        if(conn)
-        {
-            conn->send_msg(senddata->data,senddata->len);
-            std::string info = "linkA";
-            if(conn->m_p_tcp_server == m_tcpServerB)
-                info = "linkB";
-            add_msg_for_show(MSG_LINK_SEND,senddata,info);
-        }
+
     }
     else if(MODE_MASTER_RESERVER == m_send_mode) //主备模式
-    {*/
+    {
         std::string info = "linkA";
-        if(m_tcpServerA->m_p_client_connect->status() == CONNECTED)
+        if(m_tcpServerA->m_connects->status() == CONNECTED)
         {
-            m_tcpServerA->m_p_client_connect->send_msg(senddata->data,senddata->len);
+            m_tcpServerA->m_p_client_connect->send_msg(pData,nLength);
         }
-        else if(m_tcpServerB->m_p_client_connect->status() == CONNECTED)
+        else if(m_tcpServerB->m_connects->status() == CONNECTED)
         {
             info = "linkB";
-            m_tcpServerB->m_p_client_connect->send_msg(senddata->data,senddata->len);
+            m_tcpServerB->m_p_client_connect->send_msg(pData,nLength);
         }
-        add_msg_for_show(MSG_LINK_SEND,senddata,info);
-    //}
-}
-
-void HNetManager::handle_send(char* pData,int nLength)
-{
-    //如果A网通 A网发 否则B网通 B网发
-    //主备模式发送
-  /*  if(m_tcpServerA->m_p_client_connect->status() == CONNECTED)
-    {
-        m_tcpServerA->m_p_client_connect->send_msg(pData,nLength);
     }
-    else if(m_tcpServerB->m_p_client_connect->status() == CONNECTED)
-    {
-        m_tcpServerB->m_p_client_connect->send_msg(pData,nLength);
-    }*/
 }
 
-void HNetManager::handle_recv(char *pData, int nLength,int ip,std::string& time)
+void HNetManager::handle_recv(char *pData, int nLength)
 {
     if(!pData || 0 == nLength) return;
     RecvData* recv_data = new RecvData;
@@ -146,43 +113,12 @@ void HNetManager::handle_recv(char *pData, int nLength,int ip,std::string& time)
     memset(recv_data->data,0,sizeof(nLength));
     memcpy(recv_data->data,pData,nLength);
     recv_data->len = nLength;
-    recv_data->ip = ip;
-    recv_data->time = time;
-    //假设存在两个连接同时发数据过来的情况
     add_data_to_recv_list(recv_data);
 }
 
-void HNetManager::proc_recv_data()
-{
-    RecvData* p_recv_data = remove_data_from_recv_list();
-    while(p_recv_data)
-    {
-        if(p_recv_data->data && p_recv_data->len > 0)
-        {
-            //调用规约接口处理
-            //HProtocol::m_pInstance->handleReceive(p_recv_data);
-            //调用显示链路层接口处理
-            HTcpConnectPtr conn = conn_map[p_recv_data->ip];
-            std::string info = "who Recv";
-            if(conn)
-            {
-                /*if(conn->m_p_tcp_server == m_tcpServerA)
-                    info = "linkA";
-                else if(conn->m_p_tcp_server == m_tcpServerB)
-                    info = "linkB";*/
-            }
-            add_msg_for_show(MSG_LINK_RECV,p_recv_data,info);
-        }
-        if(p_recv_data->data)
-            delete p_recv_data->data;
-        delete p_recv_data;
-        p_recv_data = remove_data_from_recv_list();
-    }
-}
 
 void HNetManager::timerEvent(QTimerEvent *event)
 {
-    proc_recv_data();
 }
 
 void HNetManager::start_timer()
@@ -228,6 +164,19 @@ void HNetManager::proc_timer()//处理定时函数
             }
         }
     }*/
+
+    SndData* p_send_data =  remove_data_from_send_list();();
+    while(p_send_data)
+    {
+        if(p_send_data->data && p_send_data->len > 0)
+        {
+            handle_send(p_send_data->data,p_send_data->len);
+        }
+        if(p_send_data->data)
+            delete[] p_send_data->data;
+        delete p_send_data;
+        p_send_data = remove_data_from_send_list();
+    }
 }
 void HNetManager::handle_timer(const boost::system::error_code& err)//时间处理函数
 {
