@@ -30,7 +30,7 @@
     <item>
      <widget class="QTabWidget" name="msgTab">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="protocol">
        <attribute name="title">
@@ -38,7 +38,19 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QPlainTextEdit" name="msgTextEdit"/>
+         <widget class="QPlainTextEdit" name="msgTextEdit">
+          <property name="font">
+           <font>
+            <family>宋体</family>
+           </font>
+          </property>
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -48,7 +60,19 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QPlainTextEdit" name="linkTextEdit"/>
+         <widget class="QPlainTextEdit" name="linkTextEdit">
+          <property name="font">
+           <font>
+            <family>宋体</family>
+           </font>
+          </property>
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

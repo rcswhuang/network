@@ -35,8 +35,8 @@ void HMsg::set_data_length(std::size_t length)
 
 bool HMsg::analy_header()
 {
-    if(msg_[0] == 0)
-        return false;
+    //if(msg_[0] == 0)
+    //    return false;
     char temp[header_length];
     memset(temp,0,header_length);
     memcpy(temp,msg_,header_length);
@@ -48,11 +48,11 @@ bool HMsg::analy_header()
     }
 
     /*注意不同的头结构此处要区别判断*/
-    if(!analy_nr_header(pHead))
+    /*if(!analy_nr_header(pHead))
     {
         data_len = 0;
         return false;
-    }
+    }*/
     data_len = pHead->length;
     return true;
 }

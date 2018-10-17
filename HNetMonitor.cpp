@@ -1,7 +1,11 @@
-﻿#include "hnetmonitor.h"
+﻿#if defined (_MSC_VER) && (_MSC_VER >=1600)
+#pragma execution_character_set("utf-8")
+#endif
+#include "hnetmonitor.h"
 #include "ui_netmonitor.h"
 #include "hmyhighligher.h"
 #include "hnetthread.h"
+#include "hprotocol.h"
 #include <QTimer>
 extern ShowMsg* remove_msg_from_list();
 extern void clear_msg_list();
@@ -11,14 +15,21 @@ HNetMonitor::HNetMonitor(QWidget *parent) :
     ui(new Ui::netMonitor)
 {
     ui->setupUi(this);
+    m_pNetThread = NULL;
+    m_pProtocol = NULL;
     m_nShowMsgCount = 0;
     h = new HMyHighligher(ui->msgTextEdit->document());
+    init();
+    setWindowTitle("网络报文监视界面");
 }
 
 HNetMonitor::~HNetMonitor()
 {
     delete ui;
-    delete m_pNetThread;
+    if(m_pNetThread)
+        delete m_pNetThread;
+    if(m_pProtocol)
+        delete m_pProtocol;
     clear_msg_list();
 }
 
@@ -27,15 +38,18 @@ void HNetMonitor::init()
     QTimer *refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(procShowMsgList()));
     refreshTimer->start(1000);
-    m_pNetThread = new HNetThread(this);
+    m_pNetThread = new HNetThread;
     m_pNetThread->start();
+    m_pProtocol = new HProtocol;
+    m_pProtocol->start();
+
 }
 
 //定时处理函数 显示或者加入日志
 void HNetMonitor::procShowMsgList()
 {
     ShowMsg *msg = remove_msg_from_list();
-    while(!msg)
+    while(msg)
     {
         //显示消息
         showMsgToTextEdit(msg);
@@ -54,14 +68,14 @@ void HNetMonitor::showMsgToTextEdit(ShowMsg *msg)
     {
         strType = QString("error: "); //主要是链路关闭等异常情况
         QString strMsg = msg->info.c_str();
-        strMsg += " \n\n";
+        strMsg += " \n";
         ui->linkTextEdit->insertPlainText(strMsg);
     }
-    else if(MSG_INFORMATION)
+    else if(MSG_INFORMATION == msg->type )
     {
         strType = QString("information: "); //主要是接收连接等信息提示
         QString strMsg = msg->info.c_str();
-        strMsg += " \n\n";
+        strMsg += " \n";
         ui->linkTextEdit->insertPlainText(strMsg);
     }
     else
@@ -90,14 +104,14 @@ void HNetMonitor::showMsgToTextEdit(ShowMsg *msg)
         QString strShowMsg,strMsg;
         for(int i = 0; i < msg->len;i++)
         {
-            QString strTemp = QString("%1 ").arg((int)msg->data[i],0,16);
+            QString strTemp = QString("%1 ").arg((uchar)msg->data[i],2,16,QLatin1Char('0'));
             strMsg += strTemp;
         }
-        strMsg += "\n\n";
+        strMsg += "\n";
         if(0 == whichTextEdit)
         {
             strShowMsg = strType + strMsg;
-            strShowMsg += " \n\n";
+            strShowMsg += " \n";
             ui->msgTextEdit->insertPlainText(strShowMsg);//接收报文(心跳):<< 85 00 00 00
         }
         else if(1 == whichTextEdit)//链路层的报文详细 但不设置颜色等信息
@@ -105,7 +119,7 @@ void HNetMonitor::showMsgToTextEdit(ShowMsg *msg)
             //2018-11-11 00:12:21 from:198.120.0.101 to linkA:<< 85 00 00 00
             //2018-11-11 00:12:22 from:linkA to 198.120.0.101:<< 85 00 00 00
             strShowMsg = strType + strMsg;
-            strShowMsg += " \n\n";
+            strShowMsg += " \n";
             ui->linkTextEdit->insertPlainText(strShowMsg);
         }
     }

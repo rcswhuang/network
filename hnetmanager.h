@@ -18,7 +18,7 @@ public:
     ~HNetManager();
 
 public:
-    std::map<int,HTcpConnectPtr> conn_map;
+    //std::map<int,HTcpConnectPtr> conn_map;
     HTcpServer* m_tcpServerA; //服务器A网
     HTcpServer* m_tcpServerB; //服务器B网
     int m_send_mode;

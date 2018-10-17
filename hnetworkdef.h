@@ -44,7 +44,7 @@ typedef struct _tagNetConfig
 /****************************************************************************************************************/
 //消息结构
 //注意不同的规约头结构不一致，要根据规约更改头结构。
-#define HEAD_SIZE   2  //头长度
+#define HEAD_SIZE   3  //头长度
 #define DATA_SIZE  4096 //报文长度
 
 typedef struct _tagHead

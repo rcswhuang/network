@@ -35,7 +35,7 @@ HEADERS  += \
     hnetthread.h \
     hnetmonitor.h \
     hmyhighligher.h \
-    hnetglobal.h \
+    #hnetglobal.h \
     htcpserver.h \
     hnetmanager.h \
     htcpconnect.h \
@@ -45,7 +45,7 @@ HEADERS  += \
 RESOURCES += \
     #network.qrc
 
-LIBS +=  -L../lib -lkernel
+#LIBS +=  -L../lib -lkernel
 
 win32{
     UI_DIR = temp/ui

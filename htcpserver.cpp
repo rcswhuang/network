@@ -7,17 +7,19 @@ extern void add_msg_for_show(unsigned short type,std::string msg);
 HTcpServer::HTcpServer(io_service& io,std::string ip, int port):m_ios(io),m_endpoint(ip::address::from_string(ip),port)
 {
     m_ptrAcceptor = boost::shared_ptr<tcp::acceptor>(new tcp::acceptor(m_ios,m_endpoint));
+    m_ptrAcceptor->set_option(tcp::acceptor::reuse_address(true));
 }
 
 HTcpServer::~HTcpServer()
 {
     //创建的连接全部析构掉
+    stop();
 }
 
 void HTcpServer::start(HNetManager* manager)
 {
     m_pNetManager = manager;
-    m_ptrAcceptor->listen();
+    //m_ptrAcceptor->listen();
     init_accept();
 }
 
@@ -29,6 +31,11 @@ void HTcpServer::run()
 void HTcpServer::stop()
 {
     m_ptrAcceptor->close();
+    if(m_connects)
+    {
+        m_connects->stop();
+        m_connects.reset();
+    }
 }
 
 int HTcpServer::getip()
@@ -44,11 +51,11 @@ void HTcpServer::init_accept()
 
 void HTcpServer::handle_accept(const boost::system::error_code & ec,HTcpConnectPtr pTcpClientPtr)
 {
-    if (!ec)
+    if (ec)
     {
         //输出打印日志
-        std::ostringstream os;
-        os.str().reserve(256);
+        //std::ostringstream os;
+        //os.str().reserve(256);
         return;
     }
 
@@ -58,8 +65,6 @@ void HTcpServer::handle_accept(const boost::system::error_code & ec,HTcpConnectP
     os << "Accept a new connection:	" << socket_.remote_endpoint();
     add_msg_for_show(MSG_INFORMATION,os.str());
     m_connects = pTcpClientPtr;
-    int ip = pTcpClientPtr->getip();
-    m_pNetManager->conn_map[ip] = pTcpClientPtr;
     init_accept();
     pTcpClientPtr->start(m_pNetManager);
 

@@ -29,6 +29,13 @@ void add_data_for_show(unsigned short type, char*sdata,int len,std::string info)
 {
     if(!sdata) return;
     ShowMsg* msg = new ShowMsg;
+    if(NULL == msg) return;
+    msg->data = new char[len];
+    if(NULL == msg->data)
+    {
+        delete msg;
+        return;
+    }
     msg->type = type;
     msg->len = len;
     memcpy(msg->data,sdata,len);
@@ -44,6 +51,8 @@ void add_msg_for_show(unsigned short type,std::string show)
     int len = show.length();
     if(len <= 0) return;
     ShowMsg* msg = new ShowMsg;
+    msg->data = 0;
+    msg->len = 0;
     msg->type = type;
     msg->info = show;
     add_msg_to_list(msg);
@@ -124,15 +133,35 @@ void clear_recv_list()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void add_data_to_send_list(SndData* sndData)
 {
-
+    g_snd_mutex.lock();
+    g_send_list.push_back(sndData);
+    g_snd_mutex.unlock();
 }
 
 SndData* remove_data_from_send_list()
 {
-    return NULL;
+    SndData* p_send_data = NULL;
+    g_snd_mutex.lock();
+    if(g_send_list.size() > 0)
+    {
+        p_send_data = (SndData*)g_send_list.front();
+        g_send_list.pop_front();
+    }
+    g_snd_mutex.unlock();
+    return p_send_data;
 }
 
 void clear_send_list()
 {
-
+    g_snd_mutex.lock();
+    std::list<SndData*>::iterator it;
+    for(it = g_send_list.begin(); it != g_send_list.end(); ++it)
+    {
+        SndData* pdata = *it;
+        if(pdata->data)
+            delete[] pdata->data;
+        delete pdata;
+    }
+    g_send_list.clear();
+    g_snd_mutex.unlock();
 }

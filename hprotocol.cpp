@@ -13,7 +13,6 @@ extern void add_data_to_send_list(SndData* sndData);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 HProtocol::HProtocol()
 {
-
 }
 
 HProtocol::~HProtocol()
@@ -44,7 +43,8 @@ void HProtocol::run()
 void HProtocol::loadVirtualYx()
 {
     p_sendToScadaYXStationCounts = 0;
-    int nIndex = 0;
+    p_sendToScadaYXList = NULL;
+    /*int nIndex = 0;
     DBHANDLE dbHandle = ::findDbHandle(0,TYPE_NULL,nIndex++);
     while(::isValidDbHandle(dbHandle))
     {
@@ -95,19 +95,20 @@ void HProtocol::loadVirtualYx()
             }
             dbHandle = ::findDbHandle(0,TYPE_NULL,nIndex++);
         }
-    }
+    }*/
 
 }
 
 void HProtocol::handleReceive(RecvData* recvData)
 {
     if(!recvData) return;
-
     char* pStart = recvData->data;
     uchar funNo = *(uchar*)pStart;
     pStart += sizeof(uchar);
     ushort length = *(ushort*)pStart;
     pStart+= sizeof(ushort);
+    //增加判断funNo的函数
+    add_data_for_show(MSG_APP_RECV,recvData->data,recvData->len,"link");
     switch(funNo)
     {
     case 0x85: processHand(pStart,length);break;
@@ -117,7 +118,6 @@ void HProtocol::handleReceive(RecvData* recvData)
     case 0x91: processAllYc(pStart,length);break;
     case 0x96: processTimer(pStart,length);break;
     }
-    add_data_for_show(MSG_APP_RECV,recvData->data,recvData->len,"link");
 }
 
 void HProtocol::handleSend(char* pData,int length)
@@ -162,7 +162,7 @@ void HProtocol::processHand(char* pData,int length)
 void HProtocol::processAllYx(char* pData,int length)
 {
     if(!pData) return;
-    char* pStart = pData;
+    /*char* pStart = pData;
     ushort wYXFrame = length - 2;
     ushort addr = *(ushort*)pStart;
     ushort wStationIndex = stationAddr2Index(addr);
@@ -177,13 +177,13 @@ void HProtocol::processAllYx(char* pData,int length)
             btValue=((pStart[i]&(0x01<<j))!=0);
             kernelEnterDB(TYPE_DIGITAL,wStationIndex,wYXIndex,&btValue);
         }
-    }
+    }*/
 }
 
 void HProtocol::processChangeYx(char* pData,int length)
 {
     if(!pData) return;
-    char* pStart = pData;
+    /*char* pStart = pData;
     ushort wYXNum = (length - 2)/5;
     if((ushort)-1 != wYXNum)
         return;
@@ -194,12 +194,13 @@ void HProtocol::processChangeYx(char* pData,int length)
     pStart += sizeof(ushort);
     uchar btValue = *(uchar*)pStart;
     kernelEnterDB(TYPE_DIGITAL,wStationIndex,wYXIndex,&btValue);
+    */
 }
 
 void HProtocol::processAllYc(char* pData,int length)
 {
     if(!pData) return;
-    char* pStart = pData;
+    /*char* pStart = pData;
     ushort wYCNum = (length - 2)/sizeof(float);
     ushort addr = *(ushort*)pStart;
     ushort wStationIndex = stationAddr2Index(addr);
@@ -210,7 +211,7 @@ void HProtocol::processAllYc(char* pData,int length)
         fValue = *(float*)pStart;
         kernelEnterDB(TYPE_ANALOGUE,wStationIndex,i,&fValue);
         pStart += sizeof(float);
-    }
+    }*/
 }
 
 void HProtocol::processYKCheck(char* pData,int length)
@@ -255,7 +256,7 @@ void HProtocol::sendAllVYx()
 {
     if(p_sendToScadaYXStationCounts <= 0)
         return;
-
+/*
     for(int wStationIndex = 0; wStationIndex < p_sendToScadaYXStationCounts;wStationIndex++)
     {
         if((p_sendToScadaYXList + wStationIndex)->size() <= 0)
@@ -300,7 +301,7 @@ void HProtocol::sendAllVYx()
             delete pData;
             pData = NULL;
         }
-    }
+    }*/
 }
 
 void HProtocol::sendReqAllYx(ushort wStationIndex,ushort wYxIndex)
@@ -312,7 +313,7 @@ void HProtocol::sendYKCheckBack(ushort wStationIndex,ushort wYxIndex,uchar btVal
 {
     if(wStationIndex == (ushort)-1 || (wYxIndex) == (ushort)-1)
         return;
-    int length = 12;
+    /*int length = 12;
     char* pSndData = new char[length];
     char* pSndStart = pSndData;
     *(ushort*)pSndStart = 0xEB90;
@@ -343,7 +344,7 @@ void HProtocol::sendYKCheckBack(ushort wStationIndex,ushort wYxIndex,uchar btVal
     {
         delete pSndData;
         pSndData = NULL;
-    }
+    }*/
 }
 
 //五防机直接遥控
@@ -351,7 +352,7 @@ void HProtocol::sendWFYK(ushort wStationIndex,ushort wYxIndex,uchar btValue)
 {
     if(wStationIndex == (ushort)-1 || (wYxIndex) == (ushort)-1)
         return;
-    int length = 12;
+    /*int length = 12;
     char* pSndData = new char[length];
     char* pSndStart = pSndData;
     *(ushort*)pSndStart = 0xEB90;
@@ -389,7 +390,7 @@ void HProtocol::sendWFYK(ushort wStationIndex,ushort wYxIndex,uchar btValue)
     {
         delete pSndData;
         pSndData = NULL;
-    }
+    }*/
 }
 
 //五防机请求监控遥控
@@ -397,7 +398,7 @@ void HProtocol::sendReqYK(ushort wStationIndex,ushort wYxIndex,uchar btValue)
 {
     if(wStationIndex == (ushort)-1 || (wYxIndex) == (ushort)-1)
         return;
-    int length = 12;
+    /*int length = 12;
     char* pSndData = new char[length];
     char* pSndStart = pSndData;
     *(ushort*)pSndStart = 0xEB90;
@@ -435,14 +436,14 @@ void HProtocol::sendReqYK(ushort wStationIndex,ushort wYxIndex,uchar btValue)
     {
         delete pSndData;
         pSndData = NULL;
-    }
+    }*/
 }
 
 void HProtocol::sendLockAll(ushort wStationIndex,uchar btLock)
 {
     if(wStationIndex == (ushort)-1)
         return;
-    int length = 10;
+    /*int length = 10;
     char* pSndData = new char[length];
     char* pSndStart = pSndData;
     *(ushort*)pSndStart = 0xEB90;
@@ -464,14 +465,14 @@ void HProtocol::sendLockAll(ushort wStationIndex,uchar btLock)
     {
         delete pSndData;
         pSndData = NULL;
-    }
+    }*/
 }
 
 void HProtocol::sendLockOne(ushort wStationIndex,ushort wYxIndex,uchar btLock)
 {
     if(wStationIndex == (ushort)-1 || (wYxIndex) == (ushort)-1)
         return;
-    int length = 12;
+    /*int length = 12;
     char* pSndData = new char[length];
     char* pSndStart = pSndData;
     *(ushort*)pSndStart = 0xEB90;
@@ -494,7 +495,7 @@ void HProtocol::sendLockOne(ushort wStationIndex,ushort wYxIndex,uchar btLock)
     {
         delete pSndData;
         pSndData = NULL;
-    }
+    }*/
 }
 
 void HProtocol::sendMeasureYx()
@@ -506,7 +507,7 @@ void HProtocol::sendMeasureYx()
 void HProtocol::timerProcessor()//定时处理
 {
     proc_recv_data();
-    sendHeartBeat();
+    //sendHeartBeat();
     if(--wSendVYXTimes == 0)
     {
         sendAllVYx();

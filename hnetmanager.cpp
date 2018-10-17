@@ -17,11 +17,15 @@ bool is_valid_ip(const char *ip)
 HNetManager::HNetManager()
 {
     m_send_mode = MODE_MASTER_RESERVER;
+    m_tcpServerA = NULL;
+    m_tcpServerB = NULL;
     work.reset(new io_service::work(ios));
 }
 
 HNetManager::~HNetManager()
 {
+    stop();
+    work.reset();
     clear_send_list();
     if(m_tcpServerA)
     {
@@ -34,14 +38,14 @@ HNetManager::~HNetManager()
         delete m_tcpServerB;
         m_tcpServerB = NULL;
     }
-    stop();
+
 }
 
 void HNetManager::config()
 {
-    m_NetConfig.str_ip_master = "";
+    m_NetConfig.str_ip_master = "198.120.111.110";
     m_NetConfig.str_ip_reserver = "";
-    m_NetConfig.port = 1234;
+    m_NetConfig.port = 9999;
     //读取IP信息
 }
 
@@ -53,22 +57,22 @@ bool HNetManager::start()
     b_availA = b_avaliB = false;
     if(is_valid_ip(m_NetConfig.str_ip_master.data()))
     {
-        m_tcpServerA = new HTcpServer(ios,"",1234);
+        m_tcpServerA = new HTcpServer(ios,m_NetConfig.str_ip_master,m_NetConfig.port);
         m_tcpServerA->start(this);
         b_availA = true;
     }
 
     if(is_valid_ip(m_NetConfig.str_ip_reserver.data()))
     {
-        m_tcpServerB = new HTcpServer(ios,"",1234);
+        m_tcpServerB = new HTcpServer(ios,m_NetConfig.str_ip_reserver,m_NetConfig.port);
         m_tcpServerB->start(this);
         b_avaliB = true;
     }
 
     if(b_availA || b_avaliB)
     {
-        m_p_timer = boost::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios)) ;
-        start_timer();
+        //m_p_timer = boost::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios)) ;
+        //start_timer();
         return true;
     }
     return false;

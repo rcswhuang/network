@@ -7,9 +7,10 @@ class QMutex;
 class QTimer;
 class HMyHighligher;
 class HNetThread;
+class HProtocol;
 /*
- * 显示消息来源是网络线程发过来，注意线程把经过处理后消息直接发过来
- * 采用主进程和线程之间共享队列的方式来处理
+ * 界面显示主线程、网络线程、规约处理线程是主要部分。
+ * 线程之间的通讯都是采用共享队列来处理
 */
 namespace Ui {
 class netMonitor;
@@ -23,14 +24,16 @@ public:
     explicit HNetMonitor(QWidget *parent = 0);
     ~HNetMonitor();
     void showMsgToTextEdit(ShowMsg* msg);
-    void procShowMsgList();
     QString getJKTypeByMsg(ShowMsg* msg);
     QString getWFTypeByMsg(ShowMsg* msg);
 
     void init();
+public slots:
+    void procShowMsgList();
 public:
     HMyHighligher* h;
     HNetThread* m_pNetThread;
+    HProtocol* m_pProtocol;
 private:
     Ui::netMonitor *ui;
     int m_nShowMsgCount;

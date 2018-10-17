@@ -12,7 +12,7 @@ socket_(ios)
 
 HTcpConnect::~HTcpConnect()
 {
-    stop();
+    //stop();
     /*
     while(!m_lp_send_list.empty())
     {
@@ -22,7 +22,7 @@ HTcpConnect::~HTcpConnect()
     }*/
 }
 
-ip::tcp::socket& HTcpConnect::sokcet()
+tcp::socket& HTcpConnect::sokcet()
 {
     return socket_;
 }
@@ -38,12 +38,15 @@ void HTcpConnect::start(HNetManager* manager)
 
 void HTcpConnect::stop()
 {
-    socket_.close();
     status_ = CLOSED;
-    std::ostringstream os;
-    os.str().reserve(128);
-    os << "TcpClinet: " << socket_.remote_endpoint()<<"is stop!";
-    add_msg_for_show(MSG_ERROR,os.str());
+    try
+    {
+        socket_.shutdown(tcp::socket::shutdown_both);//必须要先关闭所有socket_
+        socket_.close();
+
+    }catch (std::exception& e)
+    {
+    }
 }
 
 int HTcpConnect::getip()
@@ -54,7 +57,7 @@ int HTcpConnect::getip()
 void HTcpConnect::do_read_header()
 {
     m_msg.clear();
-    async_read(socket_, asio::buffer(m_msg.data(),m_msg.header_length), boost::bind(&HTcpConnect::handle_read_header_data,this,asio::placeholders::error));
+    async_read(socket_, asio::buffer(m_msg.msg(),m_msg.header_length), boost::bind(&HTcpConnect::handle_read_header_data,this,asio::placeholders::error));
 }
 
 void HTcpConnect::handle_read_header_data(const err_code & err)
@@ -65,11 +68,11 @@ void HTcpConnect::handle_read_header_data(const err_code & err)
     }
     else
     {
-        stop();//表示链接中断等异常情况
-        std::ostringstream os;
-        os.str().reserve(128);
-        os << socket_.remote_endpoint().address().to_v4().to_string() << ":Connection is interrupted!";
-        add_msg_for_show(MSG_ERROR,os.str());
+        //stop();//表示链接中断等异常情况
+        //std::ostringstream os;
+        //os.str().reserve(128);
+        //os << socket_.remote_endpoint().address().to_v4().to_string() << ":Connection is interrupted!";
+        //add_msg_for_show(MSG_ERROR,os.str());
     }
 }
 
@@ -111,7 +114,7 @@ void HTcpConnect::handle_write(const err_code &err)
 {
     if(!err)
     {
-
+        return;
     }
     else
     {

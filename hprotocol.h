@@ -49,7 +49,6 @@ public slots:
     void timerProcessor();//定时处理
 
 protected:
-    HNetManager* m_pNetManager;
     QTimer* timer;//定时器
     ushort wSendVYXTimes;
     ushort p_sendToScadaYXStationCounts;
