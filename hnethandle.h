@@ -3,6 +3,7 @@
 
 //#include "hkernelapi.h"
 #include "hnetmonitor.h"
+#include "hnetthread.h"
 class HNetHandle
 {
 public:
@@ -17,7 +18,8 @@ public:
 
 public:
     HNetHandle();
-    HNetMonitor* pNetMonitor;
+    HNetMonitor* m_pNetMonitor;
+    HNetThread* m_pNetThread;
 };
 
 #endif // HNETHANDLE_H

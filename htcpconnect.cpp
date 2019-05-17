@@ -44,6 +44,12 @@ void HTcpConnect::stop()
         socket_.shutdown(tcp::socket::shutdown_both);//必须要先关闭所有socket_
         socket_.close();
 
+        uint32_t ip = socket_.remote_endpoint().address().to_v4().to_ulong();
+        uint16_t port = (uint16_t)socket_.remote_endpoint().port();
+        uint64_t ipport = ((uint64_t)ip << 16) | (uint64_t)(port);
+
+        m_pTcpServer->removeConnect(ipport);
+
     }catch (std::exception& e)
     {
     }
@@ -57,7 +63,7 @@ int HTcpConnect::getip()
 void HTcpConnect::do_read_header()
 {
     m_msg.clear();
-    async_read(socket_, asio::buffer(m_msg.msg(),m_msg.header_length), boost::bind(&HTcpConnect::handle_read_header_data,this,asio::placeholders::error));
+    async_read(socket_, asio::buffer(m_msg.msg(),4), boost::bind(&HTcpConnect::handle_read_header_data,this,asio::placeholders::error));
 }
 
 void HTcpConnect::handle_read_header_data(const err_code & err)
@@ -86,7 +92,12 @@ void HTcpConnect::handle_read_data(const err_code & err)
     if (!err)
     {
         add_data_for_show(MSG_LINK_RECV, m_msg.msg(),(int)m_msg.msg_length(),"link");
-        m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length());//链路层报文:需要互斥定时来进行处理
+        //m_pNetManager->handle_recv(m_msg.msg(),(int)m_msg.msg_length());//链路层报文:需要互斥定时来进行处理
+        uint32_t ip = socket_.remote_endpoint().address().to_v4().to_ulong();
+        uint16_t port = (uint16_t)socket_.remote_endpoint().port();
+        uint64_t ipport = ((uint64_t)ip << 16) | (uint64_t)(port);
+
+        handle_recv(m_msg.msg(),(int)m_msg.msg_length(),ipport);//链路层报文:需要互斥定时来进行处理
         m_n_over_time = 0;
         do_read_header();
     }
@@ -98,6 +109,19 @@ void HTcpConnect::handle_read_data(const err_code & err)
        os << socket_.remote_endpoint().address().to_v4().to_string() << ":Connection is interrupted!";
        add_msg_for_show(MSG_ERROR,os.str());
     }
+}
+
+void HTcpConnect::handle_recv(char* pData, int nLength, uint64_t ipport)
+{
+    if (!pData || 0 == nLength) return;
+    RecvData* recv_data = new RecvData;
+    if (!recv_data) return;
+    recv_data->data = new char[nLength];
+    memset(recv_data->data, 0, sizeof(nLength));
+    memcpy(recv_data->data, pData, nLength);
+    recv_data->len = nLength;
+    recv_data->ipport = ipport;
+    m_pNetManager->handle_recv(recv_data);
 }
 
 void HTcpConnect::send_msg(char* p,int len)

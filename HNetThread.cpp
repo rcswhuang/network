@@ -1,20 +1,24 @@
 ﻿#pragma once
 #include "hnetthread.h"
 #include "hnetmanager.h"
-
-HNetThread::HNetThread(QObject* parent)
+#include "hprotocol.h"
+HNetThread::HNetThread()
 {
-	
+    m_pNetManager = NULL;
+    m_pProtocol = NULL;
 }
 HNetThread::~HNetThread()
 {
-    delete m_pNetManager;
-    wait();
+    if(m_pNetManager)
+        delete m_pNetManager;
+    if(m_pProtocol)
+        delete m_pProtocol;
 }
 
-void HNetThread::run()
+void HNetThread::start()
 {
-    m_pNetManager = new HNetManager;
-    if(m_pNetManager->start())
-        m_pNetManager->run();
+    m_pNetManager = new HNetManager(this);
+    m_pNetManager->start();
+    m_pProtocol = new HProtocol;
+    m_pProtocol->start();
 }

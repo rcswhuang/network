@@ -44,13 +44,19 @@ typedef struct _tagNetConfig
 /****************************************************************************************************************/
 //消息结构
 //注意不同的规约头结构不一致，要根据规约更改头结构。
-#define HEAD_SIZE   3  //头长度
+#define HEAD_SIZE   4  //头长度
 #define DATA_SIZE  4096 //报文长度
-
+/*
 typedef struct _tagHead
 {
     unsigned char  funNo;
     unsigned short length;
+}HEAD;*/
+
+typedef struct _tagHead
+{
+    //unsigned char  funNo;
+    unsigned int length;
 }HEAD;
 
 typedef struct _tagData
@@ -64,6 +70,7 @@ typedef struct _tagnetData
 {
     char* data;
     int len;
+    uint64_t ipport;
     //int ip;
     //std::string time;//发送时间
 }RecvData,SndData,ShowData;

@@ -24,9 +24,12 @@ public:
     void init_accept();
     void handle_accept(const boost::system::error_code & code,HTcpConnectPtr conn);
     void handle_send(char* pData,size_t len);
+    HTcpConnectPtr findConnect(uint64_t ipport);
+    void removeConnect(uint64_t ipport);
 public:
     HNetManager* m_pNetManager;
-    HTcpConnectPtr m_connects;
+    //HTcpConnectPtr m_connects;
+    std::map<uint64_t, HTcpConnectPtr> m_connects;
 private:
     ptr_acceptor m_ptrAcceptor;
     tcp::endpoint m_endpoint;

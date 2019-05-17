@@ -16,8 +16,10 @@ HNetHandle* HNetHandle::instance()
 
 HNetHandle::HNetHandle()
 {
-    pNetMonitor = new HNetMonitor;
-    pNetMonitor->hide();
+    m_pNetThread = new HNetThread;
+    m_pNetThread->start();
+    m_pNetMonitor = new HNetMonitor;
+    m_pNetMonitor->hide();
 }
 
 

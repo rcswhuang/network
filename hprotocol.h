@@ -7,7 +7,7 @@
 #include <QVector>
 #include "hnetworkdef.h"
 class HNetManager;
-class HProtocol : public QThread
+class HProtocol : public QObject
 {
     Q_OBJECT
 public:
@@ -16,8 +16,8 @@ public:
     HProtocol();
     ~HProtocol();
 public:
-    virtual void run();
-
+    //virtual void run();
+    void start();
 
 public:
     //void start();

@@ -37,15 +37,19 @@ bool HMsg::analy_header()
 {
     //if(msg_[0] == 0)
     //    return false;
-    char temp[header_length];
+    unsigned char temp[header_length];
     memset(temp,0,header_length);
     memcpy(temp,msg_,header_length);
+
     HEAD* pHead = (HEAD*)temp;
-    if(pHead->length > max_data_length)
+    int ll = ntohl((int)pHead->length);
+
+    if(ll > max_data_length)
     {
         data_len = 0;
         return false;
     }
+   // int length = atoi(temp);
 
     /*注意不同的头结构此处要区别判断*/
     /*if(!analy_nr_header(pHead))
@@ -53,15 +57,15 @@ bool HMsg::analy_header()
         data_len = 0;
         return false;
     }*/
-    data_len = pHead->length;
+    data_len = ll;
     return true;
 }
 
 bool HMsg::analy_nr_header(HEAD* pHead)
 {
-    if(pHead->funNo < 0x85 || ((pHead->funNo > 0x88) &&(pHead->funNo != 0x91 ) && (pHead->funNo != 0x96)))
+    //if(pHead->funNo < 0x85 || ((pHead->funNo > 0x88) &&(pHead->funNo != 0x91 ) && (pHead->funNo != 0x96)))
     {
-        return false;
+   //     return false;
     }
     return true;
 }

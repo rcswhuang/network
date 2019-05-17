@@ -1,12 +1,13 @@
 ﻿#include "hnetmanager.h"
 #include "htcpconnect.h"
 #include "hprotocol.h"
-#include <QTimerEvent>
+#include "hnetthread.h"
 
-extern void add_data_to_recv_list(RecvData* recv_data);
+//extern void add_data_to_recv_list(RecvData* recv_data);
 extern void add_data_for_show(unsigned short type, char*data,int len,std::string info);
 extern SndData* remove_data_from_send_list();
 extern void clear_send_list();
+
 bool is_valid_ip(const char *ip)
 {
     /* 定义正则表达式 */
@@ -14,19 +15,39 @@ bool is_valid_ip(const char *ip)
     return 	regex_match(ip, reg_ip);
 }
 
-HNetManager::HNetManager()
+HNetManager::HNetManager(HNetThread* thread):m_pNetThread(thread)
 {
     m_send_mode = MODE_MASTER_RESERVER;
     m_tcpServerA = NULL;
     m_tcpServerB = NULL;
     work.reset(new io_service::work(ios));
+    m_nThreads = 3;
 }
 
 HNetManager::~HNetManager()
 {
-    stop();
+    ios.stop();
     work.reset();
     clear_send_list();
+
+    if (m_p_timer)
+    {
+        m_p_timer->cancel();
+    }
+
+    //释放线程池
+    std::vector<boost::shared_ptr<boost::thread>>::const_iterator it;
+    for ( it = m_listThread.cbegin(); it != m_listThread.cend(); ++ it)
+    {
+        (*it)->join();
+    }
+
+    //释放单线程
+//	if (m_pNetManagerThread)
+//	{
+//		m_pNetManagerThread->interrupt();
+//	}
+
     if(m_tcpServerA)
     {
         delete m_tcpServerA;
@@ -43,9 +64,9 @@ HNetManager::~HNetManager()
 
 void HNetManager::config()
 {
-    m_NetConfig.str_ip_master = "198.120.111.110";
+    m_NetConfig.str_ip_master = "198.120.0.110";
     m_NetConfig.str_ip_reserver = "";
-    m_NetConfig.port = 9999;
+    m_NetConfig.port = 9092;
     //读取IP信息
 }
 
@@ -71,22 +92,24 @@ bool HNetManager::start()
 
     if(b_availA || b_avaliB)
     {
-        //m_p_timer = boost::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios)) ;
-        //start_timer();
+        m_p_timer = boost::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios)) ;
+       start_timer();
+
+       //启动线程池
+       for (int i = 0; i != m_nThreads; ++i)
+       {
+           err_code err;
+           boost::shared_ptr<boost::thread> pTh(new boost::thread(boost::bind(&boost::asio::io_service::run, boost::ref(ios), err)));
+           m_listThread.push_back(pTh);
+       }
+
+       //单线程启动
+//      m_pNetManagerThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&boost::asio::io_service::run, boost::ref(ios), err)));
         return true;
     }
     return false;
 }
 
-void HNetManager::run()
-{
-    ios.run();
-}
-
-void HNetManager::stop()
-{
-    ios.stop();
-}
 
 void HNetManager::handle_send(char* pData,int nLength)
 {
@@ -97,34 +120,50 @@ void HNetManager::handle_send(char* pData,int nLength)
     }
     else if(MODE_MASTER_RESERVER == m_send_mode) //主备模式
     {
+        /*
         std::string info = "linkA";
         if(m_tcpServerA->m_connects->status() == CONNECTED)
         {
             m_tcpServerA->m_connects->send_msg(pData,nLength);
+            //add msg
+            //process msg
         }
         else if(m_tcpServerB->m_connects->status() == CONNECTED)
         {
             info = "linkB";
             m_tcpServerB->m_connects->send_msg(pData,nLength);
+        }*/
+    }
+}
+
+void HNetManager::handle_send(SndData*& sendData)
+{
+    if (m_tcpServerA)
+    {
+        HTcpConnectPtr m_connect = m_tcpServerA->findConnect(sendData->ipport);
+        if (m_connect && m_connect->status() == CONNECTED)
+        {
+            m_connect->send_msg(sendData->data, sendData->len);
+        }
+    }
+    else if (m_tcpServerB)
+    {
+        HTcpConnectPtr m_connect = m_tcpServerB->findConnect(sendData->ipport);
+        if (m_connect && m_connect->status() == CONNECTED)
+        {
+            m_connect->send_msg(sendData->data, sendData->len);
         }
     }
 }
 
-void HNetManager::handle_recv(char *pData, int nLength)
+void HNetManager::handle_recv(RecvData*& recvData)
 {
-    if(!pData || 0 == nLength) return;
-    RecvData* recv_data = new RecvData;
-    if(!recv_data) return;
-    recv_data->data = new char[nLength];
-    memset(recv_data->data,0,sizeof(nLength));
-    memcpy(recv_data->data,pData,nLength);
-    recv_data->len = nLength;
-    add_data_to_recv_list(recv_data);
-}
+    if(NULL == recvData) return;
+    //添加到列表
+    //add_data_to_recv_list(recvData);
 
-
-void HNetManager::timerEvent(QTimerEvent *event)
-{
+    //可以直接发送给协议层处理
+    m_pNetThread->m_pProtocol->handleReceive(recvData);
 }
 
 void HNetManager::start_timer()

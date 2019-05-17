@@ -2,16 +2,19 @@
 #include <QThread>
 #include "hnetworkdef.h"
 class HNetManager;
-class HNetThread :public QThread
+class HProtocol;
+class HNetThread : public QObject
 {
 	Q_OBJECT
 public:
-	HNetThread(QObject* parent = 0);
+    HNetThread();
 	~HNetThread();
 public:
-	virtual void run();
+    void start();
 public:
     HNetManager* m_pNetManager;
+    HProtocol* m_pProtocol;
+
 };
 
 

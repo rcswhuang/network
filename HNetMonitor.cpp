@@ -4,7 +4,7 @@
 #include "hnetmonitor.h"
 #include "ui_netmonitor.h"
 #include "hmyhighligher.h"
-#include "hnetthread.h"
+#include "hnetmanager.h"
 #include "hprotocol.h"
 #include <QTimer>
 extern ShowMsg* remove_msg_from_list();
@@ -15,8 +15,6 @@ HNetMonitor::HNetMonitor(QWidget *parent) :
     ui(new Ui::netMonitor)
 {
     ui->setupUi(this);
-    m_pNetThread = NULL;
-    m_pProtocol = NULL;
     m_nShowMsgCount = 0;
     h = new HMyHighligher(ui->msgTextEdit->document());
     init();
@@ -26,10 +24,7 @@ HNetMonitor::HNetMonitor(QWidget *parent) :
 HNetMonitor::~HNetMonitor()
 {
     delete ui;
-    if(m_pNetThread)
-        delete m_pNetThread;
-    if(m_pProtocol)
-        delete m_pProtocol;
+
     clear_msg_list();
 }
 
@@ -38,11 +33,6 @@ void HNetMonitor::init()
     QTimer *refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(procShowMsgList()));
     refreshTimer->start(1000);
-    m_pNetThread = new HNetThread;
-    m_pNetThread->start();
-    m_pProtocol = new HProtocol;
-    m_pProtocol->start();
-
 }
 
 //定时处理函数 显示或者加入日志

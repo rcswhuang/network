@@ -19,23 +19,24 @@ HTcpServer::~HTcpServer()
 void HTcpServer::start(HNetManager* manager)
 {
     m_pNetManager = manager;
-    //m_ptrAcceptor->listen();
     init_accept();
 }
 
 void HTcpServer::run()
 {
-    //m_ios.run();
+
 }
 
 void HTcpServer::stop()
 {
     m_ptrAcceptor->close();
-    if(m_connects)
+    map<uint64_t, HTcpConnectPtr>::iterator i;
+    for (i = m_connects.begin(); i != m_connects.end(); ++i)
     {
-        m_connects->stop();
-        m_connects.reset();
+        HTcpConnectPtr p = i->second;
+        p.reset();
     }
+    m_connects.clear();
 }
 
 int HTcpServer::getip()
@@ -64,10 +65,37 @@ void HTcpServer::handle_accept(const boost::system::error_code & ec,HTcpConnectP
     os.str().reserve(128);
     os << "Accept a new connection:	" << socket_.remote_endpoint();
     add_msg_for_show(MSG_INFORMATION,os.str());
-    m_connects = pTcpClientPtr;
+
+    uint32_t ip = socket_.remote_endpoint().address().to_v4().to_ulong();
+    uint16_t port = (uint16_t)socket_.remote_endpoint().port();
+    uint64_t ipport = ((uint64_t)ip << 16) | (uint64_t)(port);
+
+    m_connects[ipport] = pTcpClientPtr;
+    pTcpClientPtr->m_pTcpServer = this;
+
     init_accept();
     pTcpClientPtr->start(m_pNetManager);
+}
 
+HTcpConnectPtr HTcpServer::findConnect(uint64_t ipport)
+{
+    map<uint64_t, HTcpConnectPtr>::const_iterator it = m_connects.find(ipport);
+    if (it != m_connects.end())
+    {
+        return m_connects[ipport];
+    }
+    return nullptr;
+}
+
+void HTcpServer::removeConnect(uint64_t ipport)
+{
+    map<uint64_t, HTcpConnectPtr>::iterator it = m_connects.find(ipport);
+    if (it != m_connects.end())
+    {
+        HTcpConnectPtr pClient = m_connects[ipport];
+        m_connects.erase(it);
+        pClient.reset();
+    }
 }
 
 //处理发送

@@ -26,10 +26,9 @@ HProtocol::~HProtocol()
     if(p_sendToScadaYXList != NULL)
         delete[] p_sendToScadaYXList;
     clear_recv_list();
-    quit();
-    wait();
 }
 
+/*
 void HProtocol::run()
 {
     loadVirtualYx();
@@ -38,6 +37,15 @@ void HProtocol::run()
     connect(timer,SIGNAL(timeout()),this,SLOT(timerProcessor()),Qt::DirectConnection);
     timer->start(1000);
     this->exec();
+}*/
+
+void HProtocol::start()
+{
+    loadVirtualYx();
+    wSendVYXTimes = 0;
+    timer = new QTimer(this);
+    connect(timer,SIGNAL(timeout()),this,SLOT(timerProcessor()),Qt::DirectConnection);
+    timer->start(1000);
 }
 
 void HProtocol::loadVirtualYx()

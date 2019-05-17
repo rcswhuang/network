@@ -2,6 +2,7 @@
 #include "hnetworkdef.h"
 #include "hmsg.h"
 class HNetManager;
+class HTcpServer;
 class HTcpConnect :public boost::enable_shared_from_this<HTcpConnect>, boost::noncopyable
 {
 public:
@@ -23,6 +24,7 @@ public:
     //HMsg* take_msg_from_list();
 
 private:
+    void handle_recv(char* pData, int nLength, uint64_t ipport);
     void handle_read_data(const err_code & err);
     void handle_read_header_data(const err_code & err);
     void handle_write(const err_code &err);
@@ -31,6 +33,7 @@ private:
 
 public:
     HNetManager* m_pNetManager;
+    HTcpServer* m_pTcpServer;
     int m_n_over_time;//超时
 
 private:

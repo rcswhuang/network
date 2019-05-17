@@ -6,8 +6,7 @@
 class QMutex;
 class QTimer;
 class HMyHighligher;
-class HNetThread;
-class HProtocol;
+
 /*
  * 界面显示主线程、网络线程、规约处理线程是主要部分。
  * 线程之间的通讯都是采用共享队列来处理
@@ -32,8 +31,7 @@ public slots:
     void procShowMsgList();
 public:
     HMyHighligher* h;
-    HNetThread* m_pNetThread;
-    HProtocol* m_pProtocol;
+
 private:
     Ui::netMonitor *ui;
     int m_nShowMsgCount;
